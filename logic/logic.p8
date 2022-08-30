@@ -1,104 +1,99 @@
 pico-8 cartridge // http://www.pico-8.com
 version 36
 __lua__
--- awful match-3 game
--- cmrn.io
 
--- grid stuff
-tiletypecount=6
-grid={}
-gridsizex=8
-gridsizey=8
+-- tile stuff
+tiles={}
+tile_type_num=6
+tile_width=8
+tile_height=10
+offset_y=-10
+offset_x=-20
 
--- cursor
-cursorx=1
-cursory=1
-cselectx=-1
-cselecty=-1
-cflash=0
-cflashlength=20
+-- cursor stuff
+cursor_x=1
+cursor_y=1
+cursor_select_x=-1
+cursor_select_y=-1
+cursor_blink=0
+cursor_blink_frames=20
 
 -- game stuff
-matchcount=3
+match_count=3
+game_state=0 -- 0:title, 1:game, 2:gameover
 
--- graphics stuff
-gyoffset=-5
-gxoffset=0
+title_music=9
+game_music=0
+music(title_music)
 
 function _init()
-    -- make our grid
-    for i=1,gridsizey do
-        grid[i] = {}
-        for j=1,gridsizex do
-            grid[i][j] = -1--1 + rnd(tiletypecount)
+    for x=1,tile_height do
+        tiles[x] = {}
+        for y=1,tile_width do
+            tiles[x][y] = -1
         end
     end
    
-    -- reset game stuff
-    gamestarted=false
-    tcooldown=0
-    score=0
-    movesleft=15
-    gameover = false
+    tiles_initialized = false
+    wait_frames_for_clearing = 0
+    score = 0
+    moves_left = 15
 end
 
-function movecursor()
-    if btnp(0) and cursorx > 1 then
-        cursorx -= 1
+function move_cursor()
+    if btnp(0) and cursor_x > 1 then
+        cursor_x -= 1
     end
-    if btnp(1) and cursorx < gridsizex then
-        cursorx += 1
+    if btnp(1) and cursor_x < tile_width then
+        cursor_x += 1
     end
-    if btnp(2) and cursory > 1 then
-        cursory -= 1
+    if btnp(2) and cursor_y > 1 then
+        cursor_y -= 1
     end
-    if btnp(3) and cursory < gridsizey then
-        cursory += 1
-    end
-end
-
-function movecursorselected()
-    -- just revert position if we move too far away from selected tile
-    cx = cursorx
-    cy = cursory
-    movecursor()
-    if abs(cselectx - cursorx) + abs(cselecty - cursory) > 1 then
-        cursorx = cx
-        cursory = cy
+    if btnp(3) and cursor_y < tile_height then
+        cursor_y += 1
     end
 end
 
-function selectcursor()
+function move_cursor_selected()
+    -- to revert position if we move too far away from selected tile
+    local temp_x = cursor_x
+    local temp_y = cursor_y
+    move_cursor()
+    if abs(cursor_select_x - cursor_x) + abs(cursor_select_y - cursor_y) > 1 then
+        cursor_x = temp_x
+        cursor_y = temp_y
+    end
+end
+
+function select_cursor()
     if btnp(4) or btnp(5) then
-        if cselectx == -1 then
+        if cursor_select_x == -1 then
             -- select this tile
-            cselectx = cursorx
-            cselecty = cursory
-            sfx(32)
+            cursor_select_x = cursor_x
+            cursor_select_y = cursor_y
+            -- sfx(32) -- TODO:
         else
             -- something was selected
-           
-            -- swap em
-            swaptiles(cselectx, cselecty, cursorx, cursory)
-           
-            -- sfx
-            if cselectx == cursorx and cselecty == cursory then
-                sfx(32) -- cancel select
+            swap_tiles(cursor_select_x, cursor_select_y, cursor_x, cursor_y)
+
+            if cursor_select_x == cursor_x and cursor_select_y == cursor_y then
+                -- sfx(32) -- TODO: cancel select sound
             else
-                sfx(32) -- swapped!
-                movesleft -= 1
+                -- sfx(32) -- TODO: swapped sound
+                moves_left -= 1
             end
-           
+
             -- reset selection
-            cselectx = -1
-            cselecty = -1
+            cursor_select_x = -1
+            cursor_select_y = -1
         end
     end
 end
 
-function drawgameover()
+function draw_gameover()
     cls(2)
-    printcenter("you scored " .. score, 64, 30, 7)
+    print_center("you scored " .. score, 64, 30, 7)
     local judgement = "good effort!"
     if score > 250 then
         judgement = "wow! good job!!"
@@ -107,263 +102,312 @@ function drawgameover()
     elseif score > 150 then
         judgement = "nice!"
     end
-    printcenter(judgement, 64, 40, 7)
-    printcenter("press ❎/🅾️ to restart", 60, 100, 7)
+    print_center(judgement, 64, 40, 7)
+    print_center("press z to restart", 60, 100, 7)
 end
 
-function printcenter(s,x,y,c)
-    local tx = x - ((#s * 4)/2)
-    print(s, tx, y, c)
+function clear_match()
+    for y=1,tile_height do
+        for x=1,tile_width do
+            local tile = tiles[y][x]
+
+            -- horizontal
+            local count = 0
+            for x1=x,tile_width do
+                if tiles[y][x1] == tile then
+                    count += 1
+                else
+                    break
+                end
+            end
+            if count >= match_count then
+                clear_horizontally(x,y,count)
+                score += count*count
+                return true
+            end
+
+            -- vertical
+            count = 0
+            for y1=y,tile_height do
+                if tiles[y1][x] == tile then
+                    count += 1
+                else
+                    break
+                end
+            end
+            if count >= match_count then
+                clear_vertically(x,y,count)
+                score += count*count
+                return true
+            end
+        end
+    end
+    return false
 end
 
--- swaps tiles (x0,y0) (x1,y1)
-function swaptiles(x0,y0,x1,y1)
-    t0 = grid[y0][x0]
-    t1 = grid[y1][x1]
-   
-    grid[y0][x0] = t1
-    grid[y1][x1] = t0
+function clear_horizontally(x,y,count)
+    for i=0,count do
+        tiles[y][x+i] = -1
+    end
 end
 
---moves tiles into empty slots
-function movealldown(trickle)
-    for y=gridsizey,2,-1 do
-        for x=1,gridsizex do
-            -- empty cell
-            if grid[y][x] < 1 and grid[y-1][x] > 0  then
-                -- swap with the cell on top
-                swaptiles(x, y, x, y-1)
-                sfx(3)
-                if trickle then
+function clear_vertically(x,y,count)
+    for i=0,count do
+        if y + i > tile_height then
+            break
+        end
+        tiles[y+i][x] = -1
+    end
+end
+
+function exists_empty_tiles()
+    for y=1,tile_height do
+        for x=1,tile_width do
+            if tiles[y][x] < 1 then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function swap_tiles(x0, y0, x1, y1)
+    t0 = tiles[y0][x0]
+    t1 = tiles[y1][x1]
+    tiles[y0][x0] = t1
+    tiles[y1][x1] = t0
+end
+
+function move_down_tiles()
+    for y=tile_height,2,-1 do
+        for x=1,tile_width do
+            if tiles[y][x] < 1 and tiles[y-1][x] > 0  then
+                swap_tiles(x, y, x, y - 1)
+                -- sfx(3) -- TODO: sound
+                if tiles_initialized then
                     return
                 end
             end
         end
     end
-    sfx(32)
+    -- sfx(32) -- TODO: sound
 end
 
---fills empty slots in top row
-function fillemptytop()
-    for x=1,gridsizex do
-        if grid[1][x] < 1 then
-            grid[1][x] = flr(rnd(tiletypecount)) + 1
+function fill_top_tiles()
+    for x=1,tile_width do
+        if tiles[1][x] < 1 then
+            tiles[1][x] = flr(rnd(tile_type_num)) + 1
         end
     end
 end
 
---clears one match if found
-function clearmatches()
-    for y=1,gridsizey do
-        for x=1,gridsizex do
-            thistile = grid[y][x]
-            -- check horizontal
-            samecount=0
-            for x1=x,gridsizex do
-                if grid[y][x1] == thistile then
-                    samecount += 1
-                else
-                    break
-                end
-            end
-            if samecount >= matchcount then
-                clearh(x,y,samecount)
-                score += samecount*samecount
-                return true
-            end
-           
-            -- vertical
-            samecount=0
-            for y1=y,gridsizey do
-                if grid[y1][x] == thistile then
-                    samecount += 1
-                else
-                    break
-                end
-            end
-            if samecount >= matchcount then
-                clearv(x,y,samecount)
-                score+=samecount*samecount
-                return true
-            end
-        end
-    end
-    return false
-end
-
---removes tiles horizontally
-function clearh(x,y,count)
-    for i=0,count do
-        grid[y][x+i] = -1
+function update_title()
+    if btnp(4) then
+        game_state = 1
+        music(-1, 300)
+        music(game_music)
     end
 end
 
---removes tiles vertically
-function clearv(x,y,count)
-    for i=0,count do
-        if y+i > gridsizey then
-            break
-        end
-        grid[y+i][x] = -1
+function update_game()
+    if not tiles_initialized then
+        score = 0
     end
-end
 
---returns true if any spot is empty
-function checkforemptyspots()
-    for y=1,gridsizey do
-        for x=1,gridsizex do
-            if grid[y][x] < 1 then
-                return true
-            end
-        end
+    if exists_empty_tiles() then
+        move_down_tiles()
+        fill_top_tiles()
+        return
     end
-    return false
+
+    if wait_frames_for_clearing > 0 then
+        wait_frames_for_clearing -= 1
+        return
+    end
+
+    if clear_match() then
+        wait_frames_for_clearing = 5
+        return
+    end
+
+    if not tiles_initialized then
+        tiles_initialized = true
+    end
+
+    if moves_left <= 0 and game_state != 2 then
+        game_state = 2
+    end
+
+    if game_state == 2 then
+        if btnp(4) or btnp(5) then
+            _init()
+            game_state = 1
+        end
+        return
+    end
+
+    -- selected cursor blink
+    cursor_blink += 1
+    if cursor_blink > cursor_blink_frames then
+        cursor_blink = 0
+    end
+
+    -- cursor movement
+    if cursor_select_x == -1 then
+        move_cursor()
+    else
+        move_cursor_selected()
+    end
+    select_cursor()
 end
 
 function _update()
-    if not gamestarted then
-        score=0
-    end
-   
-    if checkforemptyspots() then
-        movealldown(gamestarted)
-        fillemptytop()
-        return
-    end
-   
-    -- cooldown on clearing lines
-    if tcooldown > 0 then
-        tcooldown -= 1
-        return
-    end
-   
-    if clearmatches() then
-        tcooldown = 5
-        return
-    end
-   
-    -- score can be tracked!
-    if not gamestarted then
-        gamestarted=true
-    end
-   
-    if movesleft <= 0 and not gameover then
-        gameover = true
-    end
-   
-    if gameover then
-        -- restart game
-        if btnp(4) or btnp(5) then
-            _init()
-        end
-        return
-    end
-   
-    -- selected cursor flasharoo
-    cflash+=1
-    if cflash>cflashlength then
-        cflash = 0
-    end
-   
-    -- cursor movement
-    if cselectx == -1 then
-        movecursor()
+    if game_state == 0 then
+        update_title()
     else
-        movecursorselected()
+        update_game()
     end
-    selectcursor()
+end
+
+function print_center(s,x,y,c)
+    local tx = x - ((#s * 4)/2)
+    print(s, tx, y, c)
+end
+
+function draw_title()
+    print_center("pepe crush", 64, 40, 7)
+    print_center("by 8bit-acid-lab", 64, 50, 7)
+    print_center("press z", 64, 80, 7)
+end
+
+function draw_tiles()
+    center_x = 64 - (tile_width * 8) / 2 + offset_x
+    center_y = 64 - (tile_height * 8) / 2 + offset_y
+    for y=1,tile_height do
+        for x=1,tile_width do
+            xpos = center_x + (x - 1) * 8
+            ypos = center_y + (y - 1) * 8
+            spr(tiles[y][x], xpos, ypos)
+
+            local cursor_color = 7
+            if cursor_select_x != -1 then
+                cursor_color = 4
+            end
+            if x == cursor_x and y == cursor_y then
+                rect(xpos - 1, ypos - 1, xpos + 8, ypos + 8, cursor_color)
+            end
+           
+            if x==cursor_select_x and y==cursor_select_y and cursor_blink > cursor_blink_frames/2 then
+                rect(xpos, ypos, xpos + 7, ypos + 7, 7)
+            end
+        end
+    end
+end
+
+function draw_score()
+    if not tiles_initialized then
+        return
+    end
+    local str = "score: " .. score
+    print(str, offset_x + 124 - (#str / 2) * 4, offset_y + 25, 7)
+end
+
+function draw_pepe()
+    local x = 88
+    local y = 60
+
+    spr(12, x     , y)
+    spr(13, x + 8 , y)
+    spr(14, x + 16, y)
+    spr(15, x + 24, y)
+
+    spr(28, x     , y + 8)
+    spr(29, x + 8 , y + 8)
+    spr(30, x + 16, y + 8)
+    spr(31, x + 24, y + 8)
+
+    spr(44, x     , y + 16)
+    spr(45, x + 8 , y + 16)
+    spr(46, x + 16, y + 16)
+    spr(47, x + 24, y + 16)
+
+    spr(60, x     , y + 24)
+    spr(61, x + 8 , y + 24)
+    spr(62, x + 16, y + 24)
+    spr(63, x + 24, y + 24)
+end
+
+function draw_moves_left()
+    local str = ""
+    for i=1,moves_left do
+        str = str .. "|"
+    end
+    print(str, offset_x + 33, offset_y + 118, 7)
+end
+
+function draw_usage()
+    local str = "z: select"
+    local color = 7
+    if cursor_select_x > -1 then
+        str = "z: swap"
+        color = 4
+    end
+    print("⬅️⬆️⬇️➡️ move", offset_x + 33, 120, 7)
+    print(str, offset_x + 100, 120, color)
+end
+
+function draw_game()
+    draw_tiles()
+    draw_score()
+    draw_pepe()
+    draw_moves_left()
+    draw_usage()
 end
 
 function _draw()
     cls(1)
-
-    if gameover then
-        drawgameover()
-        return
+    if game_state == 0 then
+        draw_title()
+    elseif game_state == 1 then
+        draw_game()
+    else
+        draw_gameover()
     end
-   
-    boardwidth=gridsizex*8
-    boardheight=gridsizey*8
-   
-    -- draw grid
-    for y=1,gridsizey do
-        for x=1,gridsizex do
-            xpos = gxoffset + (64 - boardwidth/2) + (x-1)*8
-            ypos = gyoffset + (64 - boardheight/2) + (y-1)*8
-            spr(grid[y][x], xpos, ypos)
-            -- draw cursor
-            cursorcolor = 7
-            if cselectx != -1 then
-                cursorcolor = 4
-            end
-            if x == cursorx and y == cursory then
-                rect(xpos-1, ypos-1, xpos + 8, ypos+8, cursorcolor)
-            end
-           
-            -- show selected tile
-            if x==cselectx and y==cselecty and cflash > cflashlength/2 then
-                rect(xpos, ypos, xpos+7, ypos+7, 7)
-            end
-        end
-    end
-   
-    -- score and stuff
-    if gamestarted then
-        scorestring = "score: " .. score
-        print(scorestring, gxoffset + 64 - (#scorestring / 2) * 4, gyoffset + 25, 7)
-        movestring = ""
-        for i=1,movesleft do
-            movestring = movestring .. "|"
-        end
-        print(movestring, gxoffset + 35, gyoffset + 98, 7)
-    end
-   
-    -- controls
-    movestring = "⬅️⬆️⬇️➡️ move cursor"
-    mxpos = 64 - 39
-    selectstring = "  🅾️❎   select tile"
-    selectcolor = 7
-    if cselectx > -1 then
-        selectstring = "  🅾️❎   swap tile"
-        selectcolor=4
-    end
-    print("⬅️⬆️⬇️➡️ move cursor", mxpos, 112, 7)
-    print(selectstring, mxpos, 120, selectcolor)
 end
 
 __gfx__
-000aa000d77777770000000000000000000000000000000044444444000000000000000000000000cccccccccccccccccc5ccccccc5cccc5f777777767766666
-000990002eeeeeef44444444000dd000000000000099970044d66444000000000000000000000000ccccccccccccccc5c55555ccc5555555effffff7d6766666
-a97770002eeaeeef4141142400dd770000eff700a994497a42dd6744000000000000000000000000cccccccccccccc5555555ccc55555555effffff7dd666666
-a97779a02aaaaaef444444440ccd77d0002eef0009a0049022dd6644000000000000000000000000ccccccccccccc555c555ccccc5555555eeeeeeef66666666
-007779a02eaaaeef422414140cccddd0002eef00a49aa99a22dd6644000000000000000000000000cccccccccccccc5ccc5ccccccc5ccc5c5555555566666776
-009900002eaeaeef444444440cdccdd000222e000049990022dddd44000000000000000000000000ccccccccccc5555555cccccc5555c555dddddddd6666d676
-00aa00002eeeeeef0004400000c2cc00000000000004400042222244000000000000000000000000cccccccccc55c5555ccccccc55555555ddddd6dd6666dd66
-000300002222222d00044000000cc000000000000000000044444444000000000000000000000000ccccccccc5555555cccccccc5555c5556666666666666666
-00700070555ddd661010122244440404bb0b000000000000000000000000000000000000000000000004400000044000000b0000000550006666666666666666
-0070007055dd666711101222444404440b3b000000000000000000000000000000000000000000000044240000bb2400000b3000000550006666660000666666
-0d7d0d7dc5d6667c0100112444442400003b00000000000000000000000b000000000000000000009444424994223249000b3000000550006666000000006666
-06760777c5d6667c0111122244442400000b0bb00000000000000000000b000000333300000000002494444224942342000b00000005d0006660000000000666
-11151115cc5667cc0000122244440000000b3b000000000000000000b00b000003333330000000000049440000494300000b00000005d0006600000000000066
-51555155cc5667cc0000112444444000000b300000000000000000000b0b00b0333a3333000000000004400000b44000003b00000005d0006600000000000066
-55555555ccc67ccc0001222224444400000b000000000000000000000b0b0b0033a7a333000000000000000000030000003b00000005d0006000000000000006
-55555555ccc67ccc0011111224444440000b000000000000000000000b0b0b00333a33330000000000000000000b0000000b00000005d0006000000000000006
-444444444444444444444444444444440000000000000000333333333333333333333333bbbbbbbb000000000000000000000000000000008eeeeee800666600
-224422444444444444444444446644440000000000000000333333333333b33333333333bbbbbbbb00000000000000000000000000000000288888880d666670
-42244224444224444464444442d6744400000000000000003339a3333333bab333333333333333330000000000000000000000000000000022222222dd666676
-44224424444422444666d44422dd66440000000000707000339a7a33333bbb3333333333333333330000000000000000000000000000000011111111dd111176
-2442244442244224422d666422ddd66400000000000e00003399a93333333b33333333333bb33b33000000000000000000000000000000001221122111111111
-22442244442244444442262422dddd640000000000737000333993333b333333333333333bb333330000000000000000000000000000000022882288111cc111
-4224422444422444444422442222224400000000000b0000333333333333333333333333333333330000000000000000000000000000000022e822e8cccccccc
-4444444444444444444444444444444400000000000b00003333333333333333333333333333333300000000000000000000000000000000212e212ec55ddddc
-d777777760066006c1dddd66c1dddd77cccccccc0000000000bbbbbbbbbbbb003333333300333300000000000000000000000000cccccccc1281128155d6667d
-2eeeeeef00000000c1555566c1555567cc1111cc000000000bbbbbbbbbbbbbb03333333303333330000000000000000000000000cccccccc22882288dd666676
-2eeaeeef00000000c1555576c15555661155551100000000bb333333333333bb3333333333333333000000000000000000000000cccccccc22e822e8dd666676
-2aaaaaef00000000c1515576c15555661155551d00000000b33333333333333b3333333333333b33000000000000000000000000cc0cc0cc212e212edd666676
-2eaaaeef00000000c15d1176c1555566115555dd000000003333bb33333333333313313333333333000000000000000000000000cccccccc12811281dd111176
-2eaeaeef00000000c155d166c1555566115555d6000000003333bb3333bb3333313113133b333333000000000000000000000000ccc00ccc22882288d1111116
-2eeeeeef00000000c1555566c155556611555566000000003333333333bb333313111131333333330000000000000000000000000c0000c022e822e8111cc111
-2222222d00000000c1111116c1111116111111dd0000000033333333333333331111111133333333000000000000000000000000c000000c211e211e11cccc11
+000aa00000000000000000000000000000000000000000000000000000000000000000000000000000000000cccccccc66666666666666666666666666666666
+000990000eeeeee004444440000dd00000000000009997000066000000000000000000000000000000000000ccccccc566666666666666666666666666666666
+a97770000eeaeee00144142000dd7700005ff5000994497002d6700000000000000000000000000000000000cccccc5566666666666666666666666666666666
+a97779a00eeaeee0044444400cccccccdddddddd0ef0009002dd660000000000000000000000000000000000cccccccc66666666666666666666666666666666
+007779a00eaaaee0024414100cccddd0002ee500049aa99002ddd66000000000000000000000000000000000cccccc5c66666666666666666666666666666666
+009900000eaeaee0044444400cdccdd0002225000049990002dddd6000000000000000000000000000000000ccc5555566666666666666666666666666666666
+00aa00000eeeeee00004400000c2cc0000000000000440000022220000000000000000000000000000000000cc55c55566666666666666666666666666666666
+000300000000000000000000000cc00000000000000000000000000000000000000000000000000000000000c555555566666666666666666666666666666666
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066666666666666666666666666666666
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066666666666666666666666666666666
+00000000000000000000000000000000000000000000000000000000000b00000000000000000000000000000000000066666666666666666666666666666666
+00000000000000000000000000000000000000000000000000000000000b00000033330000000000000000000000000066666666666666666666666666666666
+00000000000000000000000000000000000000000000000000000000b00b00000333333000000000000000000000000066666666666666666666666666666666
+000000000000000000000000000000000000000000000000000000000b0b00b0333a333300000000000000000000000066666666666666666666666666666666
+000000000000000000000000000000000000000000000000000000000b0b0b0033a7a33300000000000000000000000066666666666666666666666666666666
+000000000000000000000000000000000000000000000000000000000b0b0b00333a333300000000000000000000000066666666666666666666666666666666
+444444444444444444444444444444440000000000000000333333333333333333333333bbbbbbbb000000000000000066666666666666666666666666666666
+224422444444444444444444446644440000000000000000333333333333b33333333333bbbbbbbb000000000000000066666666666666666666660000666666
+42244224444224444464444442d6744400000000000000003339a3333333bab33333333333333333000000000000000066666666666666666666000000006666
+44224424444422444666d44422dd66440000000000707000339a7a33333bbb333333333333333333000000000000000066666666666666666660000000000666
+2442244442244224422d666422ddd66400000000000e00003399a93333333b33333333333bb33b33000000000000000066666666666666666600070000700066
+22442244442244444442262422dddd640000000000737000333993333b333333333333333bb33333000000000000000066666666666666666600707007070066
+4224422444422444444422442222224400000000000b000033333333333333333333333333333333000000000000000066666666666666666000000000000006
+4444444444444444444444444444444400000000000b000033333333333333333333333333333333000000000000000066666666666666666000000000000006
+d777777760066006c1dddd66c1dddd77cccccccc0000000000bbbbbbbbbbbb003333333300333300000000000000000066666666666666666000700000000006
+2eeeeeef00000000c1555566c1555567cc1111cc000000000bbbbbbbbbbbbbb03333333303333330000000000000000066666666666666666000077777770006
+2eeaeeef00000000c1555576c15555661155551100000000bb333333333333bb3333333333333333000000000000000066666666666666666000000000000006
+2000e000d00ef00000000c1515576c15555661155551d00000000b33333333333333b33333333333000000000000000066666666666666666000000000000006
+2eaaaeef00000000c15d1176c1555566115555dd000000003333bb33333333333313313333333333000000000000000066666666666666666000000000000006
+2eaeaeef00000000c155d166c1555566115555d6000000003333bb3333bb3333313113133b333333000000000000000066666666666666666000000000000006
+2eeeeeef00000000c1555566c155556611555566000000003333333333bb33331311113133333333000000000000000066666666666666666000000000000006
+2222222d00000000c1111116c1111116111111dd0000000033333333333333331111111133333333000000000000000066666666666666666000000000000006
 00666600000000000000000000000000000bb00000000000000000000000000000000000000000000f000f000f000f0000000000113311311133333333333333
 0600006000f0800000000000000ef000000b3b000000000000000000000000000f000f000f000f000ffffff00ffffff00f000f00011331100113333333333311
 6009800600000090be82887700ed7f00000b03000000000000007000000000000ffffff00ffffff00f1fff100f1fff100ffffff0001011000133133333333100
@@ -375,7 +419,7 @@ d777777760066006c1dddd66c1dddd77cccccccc0000000000bbbbbbbbbbbb003333333300333300
 0777008000000000000000000077ee0000baa70000000000000000000000000007e007e007e007e007e007e007e007e007e007e00080000000000000008fff00
 00077687000000000077ee000eeeeee00bbab77000000000000000000000070007e007e007e007e007e007e007e007e007e007e0000fff000008fff0000f1f00
 00072777022222200eeeeee00eeeeff00aaabba00007000000700700070000000777777007777770077777700777777007777770000f1f000900f1f0000fffa0
-0707877702222220eeeeeffe0eeeeff0aabaaaaa0000070000000000000000000717771007177710071777100717771007177710000fffa00490fffa00992000
+0707877702222220eeeeeffe0eeeeff0aab000e000d000000070000000000000000000717771007177710071777100717771007177710000fffa00490fffa009
 0077777707888870eeeeeffe0eeeeee0999999990070000000000000000000000777777007777770077777700777777007777770090990000449990009999400
 0006675700777700888888880888888000088000000070000070070000000070008828000088280000882800008828000088280000a999000049990000aa9440
 006006770000000000222200002222000008e00000000000000000000070000008822280008227000882227007822280007822800aa9990000099000002a0040
@@ -383,7 +427,7 @@ d777777760066006c1dddd66c1dddd77cccccccc0000000000bbbbbbbbbbbb003333333300333300
 000000000000bb3b00000000000000000000000000000000000000000000000000000000000000066666dddd0000000000000000666666660000011001100000
 00000000000bb2b200000000000aa000000000000000000000000000000000000000000000000066d666ddddd000000000000000666666660111007777111000
 00000000007bbbbb0000bb3b0099970000000000000000000000000000000000000070000000066ddd6d66dddd000000000a0000d66666dd0011177ff7770000
-0000bb3b07bb3300000bb2b20994497000000000000000000000000000000000000777000000666ddd66666ddd0000000aaaaa00dd6666dd000177fff7ff7110
+0000bb3b07bb3300000bb2b20994497000000000000000000000000000000000000777000000666ddd66666ddd0000000000e000d0000dd6666dd000177fff7f
 0bbbb2b20bb330b00b7bbbbb49a0049a00000000000000000000000000000000000070000006666dddd666ddddd0000000aaa000dddd6ddd017777fffffff711
 b77bbbbbbb330000b7bb2288049aa9900000000000000000000000000000000000000000006666ddddd6dddddddd000000a0a000dddddddd0777777fffff7710
 bbbb33000b0b0000bbbb3330004999000000000000000000000000000000000000000000066d6dddddddddddddddd00000000000dddddddd17fff77fffff7770
@@ -607,7 +651,18 @@ a11000201a7101a7101a7201a7301a7401a7501a7601a7701a7701a7601a7501a7401a7301a7201a
 001000001f050210501a0501f05021050180501f0501805021050210501c0501f050210501c0501f050210501c0501f050210501c0501f050210501c0501f050210501a0501f050210501a0501f050210501a050
 01100020071400711013130071201311007140071201f11009140091102112015140091201511009140091101a120021200e1100e140021200e110021401a12000140001200c1100c140001200c1100014000110
 1510002010000000003f235000000c61500000000000000000000000003f235000000c6153f6153f1123f21100000000003f125000000c6153f2053f2053f2053f2053f2053f535000000c6153f6153f1123f211
-
+110100202171021710217202173021740217502176021770217702176021750217402173021720217102171021710217102172021730217402175021760217702177021760217502174021730217202171021710
+001100201c7141c7111c7211c7311c7411c7511c7611c7711c7711c7611c7511c7411c7311c7211c7111c7151c7141c7101c7201c7301c7401c7501c7601c7701c7701c7601c7501c7401c7301c7201c7101c710
+010100201c7101c7101c7201c7301c7401c7501c7601c7701c7701c7601c7501c7401c7301c7201c7101c7101c7101c7101c7201c7301c7401c7501c7601c7701c7701c7601c7501c7401c7301c7201c7101c710
+001000201f0301f010210302101023030230101a0301a0101f0301f010210302101023030230101a0301a0102103021010230302301024030240101a0301a0102103021010230302301024030240101a0301a010
+001000202b0261c0262b0261c026180262402618026240260000000000000000000000000000000000000000214261c226214261c226184262422618426242260000000000000000000000000000000000000000
+a10100201a7101a7101a7201a7301a7401a7501a7601a7701a7701a7601a7501a7401a7301a7201a7101a7101a7101a7101a7201a7301a7401a7501a7601a7701a7701a7601a7501a7401a7301a7201a7101a710
+110100201f7101f7101f7201f7301f7401f7501f7601f7701f7701f7601f7501f7401f7301f7201f7101f7101f7101f7101f7201f7301f7401f7501f7601f7701f7701f7601f7501f7401f7301f7201f7101f710
+011000002603026010240302401023030230101f0301f0102603026010240302401023030230101f0301f01028030280102403024010230302301021030210102403024010230302301021030210101f0301f010
+3d1000002603026010240302401023030230101f0301f0102603026010240302401023030230101f0301f01028030280102403024010230302301021030210102403024010230302301021030210101f0301f010
+151000003271032710327203273032740327503276032770327703276032750327403273032720327103271032710327103272032730327403275032760327703277032760327503274032730327203271032710
+011000000c0730000024600000000c0730000000000000000c0730000018100000000c0730000000000000000c0730000000000000000c0730000000000000000c0730000000000000000c073000000000000000
+011000000c043000000000000000000000000000000000000c043000000000000000000000000000000000000c043000000000000000000000000000000000000c04300000000000000000000000000000000000
 __music__
 01 06100a0f
 00 00100a0f
@@ -617,4 +672,13 @@ __music__
 00 004a4344
 01 05004b44
 02 054a4344
+00 41474344
+01 06030a04
+00 00070a04
+00 02030a04
+00 05030a04
+00 060a0704
+00 000a0304
+00 05000b04
+02 050a0304
 00 41474344
