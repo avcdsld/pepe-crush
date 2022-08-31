@@ -42,17 +42,33 @@ function _init()
 end
 
 function move_cursor()
-    if btnp(0) and cursor_x > 1 then
-        cursor_x -= 1
+    if btnp(0) then
+        if cursor_x > 1 then
+            cursor_x -= 1
+        else
+            sfx(23) -- Invalid move
+        end
     end
-    if btnp(1) and cursor_x < tile_width then
-        cursor_x += 1
+    if btnp(1) then
+        if cursor_x < tile_width then
+            cursor_x += 1
+        else
+            sfx(23) -- Invalid move
+        end
     end
-    if btnp(2) and cursor_y > 1 then
-        cursor_y -= 1
+    if btnp(2) then
+        if cursor_y > 1 then
+            cursor_y -= 1
+        else
+            sfx(23) -- Invalid move
+        end
     end
-    if btnp(3) and cursor_y < tile_height then
-        cursor_y += 1
+    if btnp(3) then
+        if cursor_y < tile_height then
+            cursor_y += 1
+        else
+            sfx(23) -- Invalid move
+        end
     end
 end
 
@@ -64,6 +80,7 @@ function move_cursor_selected()
     if abs(cursor_select_x - cursor_x) + abs(cursor_select_y - cursor_y) > 1 then
         cursor_x = temp_x
         cursor_y = temp_y
+        sfx(23) -- Invalid move
     end
 end
 
@@ -73,7 +90,7 @@ function select_cursor()
             -- select this tile
             cursor_select_x = cursor_x
             cursor_select_y = cursor_y
-            -- sfx(32) -- TODO:
+            sfx(21) -- Object select
         else
             -- something was selected
             swap_tiles(cursor_select_x, cursor_select_y, cursor_x, cursor_y)
@@ -81,7 +98,7 @@ function select_cursor()
             if cursor_select_x == cursor_x and cursor_select_y == cursor_y then
                 -- sfx(32) -- TODO: cancel select sound
             else
-                -- sfx(32) -- TODO: swapped sound
+                sfx(24) -- Swap Position
                 moves_left -= 1
             end
 
@@ -227,6 +244,7 @@ function update_game()
     end
 
     if clear_match() then
+        sfx(20) -- Line Clear
         wait_frames_for_clearing = 5
         return
     end
