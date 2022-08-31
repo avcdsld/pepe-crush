@@ -39,6 +39,13 @@ function _init()
     score = 0
     moves_left = 15
     wait_frames_for_pepe = 0
+    wait_frames_for_angry_pepe = 0
+end
+
+function inform_invalid_move()
+    sfx(23) -- Invalid move
+    wait_frames_for_angry_pepe = 30
+    wait_frames_for_pepe = 0
 end
 
 function move_cursor()
@@ -46,28 +53,28 @@ function move_cursor()
         if cursor_x > 1 then
             cursor_x -= 1
         else
-            sfx(23) -- Invalid move
+            inform_invalid_move()
         end
     end
     if btnp(1) then
         if cursor_x < tile_width then
             cursor_x += 1
         else
-            sfx(23) -- Invalid move
+            inform_invalid_move()
         end
     end
     if btnp(2) then
         if cursor_y > 1 then
             cursor_y -= 1
         else
-            sfx(23) -- Invalid move
+            inform_invalid_move()
         end
     end
     if btnp(3) then
         if cursor_y < tile_height then
             cursor_y += 1
         else
-            sfx(23) -- Invalid move
+            inform_invalid_move()
         end
     end
 end
@@ -80,7 +87,7 @@ function move_cursor_selected()
     if abs(cursor_select_x - cursor_x) + abs(cursor_select_y - cursor_y) > 1 then
         cursor_x = temp_x
         cursor_y = temp_y
-        sfx(23) -- Invalid move
+        inform_invalid_move()
     end
 end
 
@@ -348,6 +355,17 @@ end
 function draw_pepe()
     local x = 94
     local y = 78
+
+    if wait_frames_for_angry_pepe > 0 then
+        wait_frames_for_angry_pepe -= 1
+        local spr_num = 140 -- angry pepe
+        local offset = 0
+        if wait_frames_for_angry_pepe % 4 >= 2 then
+            offset = 1
+        end
+        spr(spr_num, x + offset, y, 4, 4)
+        return
+    end
 
     if wait_frames_for_pepe > 0 then
         wait_frames_for_pepe -= 1
