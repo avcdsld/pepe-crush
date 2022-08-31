@@ -407,7 +407,7 @@ function draw_pepe()
     spr(spr_num, x, y, 4, 4)
 end
 
-function draw_time_left()
+function draw_time_left_bar()
     if not tiles_initialized then
         return
     end
@@ -424,7 +424,7 @@ function draw_game()
     draw_score()
     draw_time_left()
     draw_pepe()
-    draw_time_left()
+    draw_time_left_bar()
 end
 
 function _draw()
