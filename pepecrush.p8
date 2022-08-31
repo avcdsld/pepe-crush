@@ -38,7 +38,6 @@ function _init()
     wait_frames_for_clearing = 0
     score = 0
     time_left = 60 * 30 -- 1 min
-    moves_left = 15
     wait_frames_for_pepe = 0
     wait_frames_for_angry_pepe = 0
 end
@@ -107,7 +106,6 @@ function select_cursor()
                 -- sfx(32) -- TODO: cancel select sound
             else
                 sfx(24) -- Swap Position
-                moves_left -= 1
             end
 
             -- reset selection
@@ -263,9 +261,6 @@ function update_game()
         tiles_initialized = true
     end
 
-    -- if moves_left <= 0 and game_state != 2 then
-    --     game_state = 2
-    -- end
     if time_left <= 0 and game_state != 2 then
         game_state = 2
         music(-1, 300)
@@ -412,7 +407,7 @@ function draw_pepe()
     spr(spr_num, x, y, 4, 4)
 end
 
-function draw_moves_left()
+function draw_time_left()
     if not tiles_initialized then
         return
     end
@@ -429,7 +424,7 @@ function draw_game()
     draw_score()
     draw_time_left()
     draw_pepe()
-    draw_moves_left()
+    draw_time_left()
 end
 
 function _draw()
