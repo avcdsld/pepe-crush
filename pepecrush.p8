@@ -37,6 +37,7 @@ function _init()
     tiles_initialized = false
     wait_frames_for_clearing = 0
     score = 0
+    time_left = 60 * 30 -- 1 min
     moves_left = 15
     wait_frames_for_pepe = 0
     wait_frames_for_angry_pepe = 0
@@ -237,6 +238,7 @@ end
 function update_game()
     if not tiles_initialized then
         score = 0
+        time_left = 60 * 30 -- 1 min
     end
 
     if exists_empty_tiles() then
@@ -252,6 +254,7 @@ function update_game()
 
     if clear_match() then
         sfx(20) -- Line Clear
+        time_left += 5 * 30
         wait_frames_for_clearing = 5
         return
     end
@@ -260,14 +263,20 @@ function update_game()
         tiles_initialized = true
     end
 
-    if moves_left <= 0 and game_state != 2 then
+    -- if moves_left <= 0 and game_state != 2 then
+    --     game_state = 2
+    -- end
+    if time_left <= 0 and game_state != 2 then
         game_state = 2
+        music(-1, 300)
+        sfx(22) -- Gameover -- TODO: Change the sound depending on the judgement?
     end
 
     if game_state == 2 then
         if btnp(4) or btnp(5) then
             _init()
             game_state = 1
+            music(game_music)
         end
         return
     end
@@ -352,6 +361,21 @@ function draw_score()
     print_center(str, offset_x + 128, offset_y + 35, 7)
 end
 
+function draw_time_left()
+    if not tiles_initialized then
+        return
+    end
+    if time_left > 0 then
+        time_left -= 1
+    end
+    local str = "" .. flr(time_left / 30)
+    print_center("time", offset_x + 128, offset_y + 50, 7)
+    print_center(str, offset_x + 128, offset_y + 60, 7)
+    if not tiles_initialized then
+        return
+    end
+end
+
 function draw_pepe()
     local x = 94
     local y = 78
@@ -389,8 +413,12 @@ function draw_pepe()
 end
 
 function draw_moves_left()
+    if not tiles_initialized then
+        return
+    end
+    local num = time_left / 30 / 5
     local str = ""
-    for i=1,moves_left do
+    for i=1,num do
         str = str .. "|"
     end
     print(str, offset_x + 25, offset_y + 118, 7)
@@ -399,6 +427,7 @@ end
 function draw_game()
     draw_tiles()
     draw_score()
+    draw_time_left()
     draw_pepe()
     draw_moves_left()
 end
