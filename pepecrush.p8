@@ -45,6 +45,13 @@ function _init()
     wanted_new_bomb_tile_type = -1
     bomb_spr_offset = 16
     wait_frames_for_bomb = 6
+
+    -- for checking illegal moves
+    should_match_swapped_tiles = false
+    swapped_tile1_x = -1
+    swapped_tile1_y = -1
+    swapped_tile2_x = -1
+    swapped_tile2_y = -1
 end
 
 function inform_invalid_move()
@@ -107,7 +114,14 @@ function select_cursor()
             -- something was selected
             swap_tiles(cursor_select_x, cursor_select_y, cursor_x, cursor_y)
 
+            should_match_swapped_tiles = true
+            swapped_tile1_x = cursor_select_x
+            swapped_tile1_y = cursor_select_y
+            swapped_tile2_x = cursor_x
+            swapped_tile2_y = cursor_y
+
             if cursor_select_x == cursor_x and cursor_select_y == cursor_y then
+                should_match_swapped_tiles = false
                 -- sfx(32) -- TODO: cancel select sound
             else
                 sfx(24) -- Swap Position
@@ -314,6 +328,7 @@ function update_game()
 
     local matched_count, matched_tile_type, include_bomb = clear_match()
     if matched_count > 0 then
+        should_match_swapped_tiles = false
         sfx(20) -- Line Clear
         time_left += 5 * 30
         wait_frames_for_clearing = 5
@@ -324,6 +339,10 @@ function update_game()
             make_bomb(matched_tile_type)
         end
         return
+    elseif should_match_swapped_tiles and tiles_initialized then
+        should_match_swapped_tiles = false
+        swap_tiles(swapped_tile1_x, swapped_tile1_y, swapped_tile2_x, swapped_tile2_y)
+        inform_invalid_move()
     end
 
     if not tiles_initialized then
