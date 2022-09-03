@@ -230,7 +230,7 @@ function clear_vertically(x,y,count)
         if y + i > tile_height then
             break
         end
-        if tiles[y][x+i] > tile_type_num then
+        if tiles[y+i][x] > tile_type_num then
             include_bomb = true
         end
         tiles[y+i][x] = -1
