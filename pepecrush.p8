@@ -193,7 +193,7 @@ function clear_match()
             end
             if count >= match_count then
                 local include_bomb = clear_horizontally(x,y,count)
-                score += count*count
+                score += count * count
                 return count, tile_type, include_bomb
             end
 
@@ -208,7 +208,7 @@ function clear_match()
             end
             if count >= match_count then
                 local include_bomb = clear_vertically(x,y,count)
-                score += count*count
+                score += count * count
                 return count, tile_type, include_bomb
             end
         end
