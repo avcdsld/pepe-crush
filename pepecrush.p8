@@ -339,7 +339,7 @@ function update_game()
             make_bomb(matched_tile_type)
         end
         return
-    elseif should_match_swapped_tiles and tiles_initialized then
+    elseif should_match_swapped_tiles then
         should_match_swapped_tiles = false
         swap_tiles(swapped_tile1_x, swapped_tile1_y, swapped_tile2_x, swapped_tile2_y)
         inform_invalid_move()
