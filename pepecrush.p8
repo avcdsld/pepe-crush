@@ -40,6 +40,11 @@ function _init()
     time_left = 60 * 30 -- 1 min
     wait_frames_for_pepe = 0
     wait_frames_for_angry_pepe = 0
+
+    -- bomb
+    wanted_new_bomb_tile_type = -1
+    bomb_spr_offset = 16
+    wait_frames_for_bomb = 6
 end
 
 function inform_invalid_move()
@@ -130,58 +135,107 @@ function draw_gameover()
     print_center("press z to restart", 60, 100, 7)
 end
 
+function make_bomb(tile_type)
+    local candidates_count = 0
+    local candidates_x = {}
+    local candidates_y = {}
+    for y=1,tile_height do
+        for x=1,tile_width do
+            if tiles[y][x] == tile_type then
+                candidates_count += 1
+                candidates_x[candidates_count] = x
+                candidates_y[candidates_count] = y
+            end
+        end
+    end
+    if candidates_count == 0 then
+        wanted_new_bomb_tile_type = tile_type + bomb_spr_offset
+    else
+        local num = flr(rnd(candidates_count)) + 1
+        tiles[candidates_y[num]][candidates_x[num]] = tile_type + bomb_spr_offset
+    end
+end
+
+function destroy_by_bomb(tile_type)
+    for y=1,tile_height do
+        for x=1,tile_width do
+            if get_tile_type(tiles[y][x]) == tile_type then
+                tiles[y][x] = -1
+            end
+        end
+    end
+end
+
+function get_tile_type(tile)
+    if tile > tile_type_num then
+        return tile - bomb_spr_offset
+    end
+    return tile
+end
+
+-- returns: cleared_count, tile_type, include_bomb
 function clear_match()
     for y=1,tile_height do
         for x=1,tile_width do
-            local tile = tiles[y][x]
+            local tile_type = get_tile_type(tiles[y][x])
 
             -- horizontal
             local count = 0
             for x1=x,tile_width do
-                if tiles[y][x1] == tile then
+                if get_tile_type(tiles[y][x1]) == tile_type then
                     count += 1
                 else
                     break
                 end
             end
             if count >= match_count then
-                clear_horizontally(x,y,count)
+                local include_bomb = clear_horizontally(x,y,count)
                 score += count*count
-                return true
+                return count, tile_type, include_bomb
             end
 
             -- vertical
             count = 0
             for y1=y,tile_height do
-                if tiles[y1][x] == tile then
+                if get_tile_type(tiles[y1][x]) == tile_type then
                     count += 1
                 else
                     break
                 end
             end
             if count >= match_count then
-                clear_vertically(x,y,count)
+                local include_bomb = clear_vertically(x,y,count)
                 score += count*count
-                return true
+                return count, tile_type, include_bomb
             end
         end
     end
-    return false
+    return 0, 0, false
 end
 
 function clear_horizontally(x,y,count)
+    local include_bomb = false
     for i=0,count do
+        if tiles[y][x+i] > tile_type_num then
+            include_bomb = true
+        end
         tiles[y][x+i] = -1
     end
+    return include_bomb
 end
 
 function clear_vertically(x,y,count)
+    local include_bomb = false
     for i=0,count do
         if y + i > tile_height then
             break
         end
+        if tiles[y][x+i] > tile_type_num then
+            include_bomb = true
+        end
         tiles[y+i][x] = -1
     end
+    return include_bomb
 end
 
 function exists_empty_tiles()
@@ -220,7 +274,12 @@ end
 function fill_top_tiles()
     for x=1,tile_width do
         if tiles[1][x] < 1 then
-            tiles[1][x] = flr(rnd(tile_type_num)) + 1
+            if wanted_new_bomb_tile_type > 0 then
+                tiles[1][x] = wanted_new_bomb_tile_type
+                wanted_new_bomb_tile_type = -1
+            else
+                tiles[1][x] = flr(rnd(tile_type_num)) + 1
+            end
         end
     end
 end
@@ -250,10 +309,17 @@ function update_game()
         return
     end
 
-    if clear_match() then
+    local matched_count, matched_tile_type, include_bomb = clear_match()
+    if matched_count > 0 then
         sfx(20) -- Line Clear
         time_left += 5 * 30
         wait_frames_for_clearing = 5
+        if include_bomb then
+            destroy_by_bomb(matched_tile_type)
+        end
+        if matched_count >= 4 then
+            make_bomb(matched_tile_type)
+        end
         return
     end
 
@@ -312,13 +378,28 @@ function draw_title()
 end
 
 function draw_tiles()
+    if wait_frames_for_bomb > 0 then
+        wait_frames_for_bomb -= 1
+    else
+        wait_frames_for_bomb = 6
+    end
+
     center_x = 64 - (tile_width * 8) / 2 + offset_x
     center_y = 64 - (tile_height * 8) / 2 + offset_y
     for y=1,tile_height do
         for x=1,tile_width do
             xpos = center_x + (x - 1) * 8
             ypos = center_y + (y - 1) * 8
-            spr(tiles[y][x], xpos, ypos)
+            local spr_num = tiles[y][x]
+
+            -- for bomb blink
+            if tiles[y][x] > tile_type_num then
+                if wait_frames_for_bomb % 6 >= 3 then
+                    spr_num -= bomb_spr_offset
+                end
+            end
+
+            spr(spr_num, xpos, ypos)
 
             local cursor_color = 7
             if cursor_select_x != -1 then
