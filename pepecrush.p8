@@ -157,13 +157,16 @@ function make_bomb(tile_type)
 end
 
 function destroy_by_bomb(tile_type)
+    local count = 0
     for y=1,tile_height do
         for x=1,tile_width do
             if get_tile_type(tiles[y][x]) == tile_type then
                 tiles[y][x] = -1
+                count += 1
             end
         end
     end
+    score += count * count
 end
 
 function get_tile_type(tile)
