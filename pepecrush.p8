@@ -218,7 +218,7 @@ end
 
 function clear_horizontally(x,y,count)
     local include_bomb = false
-    for i=0,count do
+    for i=0,count-1 do
         if tiles[y][x+i] > tile_type_num then
             include_bomb = true
         end
@@ -229,7 +229,7 @@ end
 
 function clear_vertically(x,y,count)
     local include_bomb = false
-    for i=0,count do
+    for i=0,count-1 do
         if y + i > tile_height then
             break
         end
