@@ -110,7 +110,7 @@ function select_cursor()
             if cursor_select_x == cursor_x and cursor_select_y == cursor_y then
                 -- sfx(32) -- TODO: cancel select sound
             else
-                sfx(24) -- Swap Position
+                sfx(14) -- Swap Position
             end
 
             -- reset selection
@@ -166,7 +166,10 @@ function destroy_by_bomb(tile_type)
             end
         end
     end
-    score += count * count
+    if count > 0 then
+        sfx(24) -- Bomb1
+        score += count * count
+    end
 end
 
 function get_tile_type(tile)
