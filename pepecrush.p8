@@ -183,6 +183,64 @@ function destroy_by_bomb(tile_type)
     score += count * count
 end
 
+function exists_match(x, y)
+    local tile_type = get_tile_type(tiles[x][y])
+
+    local count = 0
+    for i=1,tile_height do
+        if get_tile_type(tiles[i][x]) == tile_type then
+            count += 1
+        end
+    end
+    if count >= match_count then
+        return true
+    end
+
+    count = 0
+    for i=1,tile_width do
+        if get_tile_type(tiles[y][i]) == tile_type then
+            count += 1
+        end
+    end
+    if count >= match_count then
+        return true
+    end
+
+    return false
+end
+
+function exists_match_after_move(x0, y0, x1, y1)
+    local exists = false
+    swap_tiles(x0, y0, x1, y1)
+    if exists_match(x0, y0) then
+        exists = true
+    elseif exists_match(x1, y1) then
+        exists = true
+    end
+    swap_tiles(x0, y0, x1, y1)
+    return exists
+end
+
+function can_move()
+    for y=1,tile_height-1 do
+        for x=1,tile_width-1 do
+            if exists_match_after_move(x, y, x + 1, y) then
+                return true
+            end
+            if exists_match_after_move(x, y, x, y + 1) then
+                return true
+            end
+        end
+    end
+    if exists_match_after_move(tile_width, tile_height, tile_width - 1, tile_height) then
+        return true
+    end
+    if exists_match_after_move(tile_width, tile_height, tile_width, tile_height - 1) then
+        return true
+    end
+    return false
+end
+
 function get_tile_type(tile)
     if tile > tile_type_num then
         return tile - bomb_spr_offset
@@ -349,7 +407,7 @@ function update_game()
         tiles_initialized = true
     end
 
-    if time_left <= 0 and game_state != 2 then
+    if (not can_move() or time_left <= 0) and game_state != 2 then
         game_state = 2
         music(-1, 300)
         sfx(22) -- Gameover -- TODO: Change the sound depending on the judgement?
