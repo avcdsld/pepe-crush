@@ -515,6 +515,13 @@ function draw_tiles()
             end
 
             spr(spr_num, xpos, ypos)
+        end
+    end
+
+    for y=1,tile_height do
+        for x=1,tile_width do
+            xpos = center_x + (x - 1) * 8
+            ypos = center_y + (y - 1) * 8
 
             local cursor_color = 7
             if cursor_select_x != -1 then
