@@ -60,10 +60,12 @@ function _init()
     star_x = {}
     star_y = {}
     star_speed = {}
-    for i=1,100 do
+    obj_spr_num = {}
+    for i=1,50 do
         add(star_x, flr(rnd(128)))
         add(star_y, flr(rnd(128)))
         add(star_speed, rnd(1.5) + 0.5)
+        add(obj_spr_num, flr(rnd(tile_type_num)))
     end
 end
 
@@ -489,7 +491,8 @@ function draw_title()
         elseif star_speed[i] < 1 then
             color = 1
         end
-        pset(star_x[i], star_y[i], color)
+        -- pset(star_x[i], star_y[i], color)
+        spr(obj_spr_num[i], star_x[i], star_y[i])
     end
     for i=1,#star_y do
         local sy = star_y[i]
