@@ -55,6 +55,16 @@ function _init()
     swapped_tile1_y = -1
     swapped_tile2_x = -1
     swapped_tile2_y = -1
+
+    -- stars in start screen
+    star_x = {}
+    star_y = {}
+    star_speed = {}
+    for i=1,100 do
+        add(star_x, flr(rnd(128)))
+        add(star_y, flr(rnd(128)))
+        add(star_speed, rnd(1.5) + 0.5)
+    end
 end
 
 function inform_invalid_move()
@@ -472,6 +482,24 @@ function print_center(s,x,y,c)
 end
 
 function draw_title()
+    for i=1,#star_x do
+        local color = 6
+        if star_speed[i] < 1.5 then
+            color = 13
+        elseif star_speed[i] < 1 then
+            color = 1
+        end
+        pset(star_x[i], star_y[i], color)
+    end
+    for i=1,#star_y do
+        local sy = star_y[i]
+        sy += star_speed[i]
+        if sy > 128 then
+            sy -= 128
+        end
+        star_y[i] = sy
+    end
+
     print_center("pepe crush", 64, 40, 7)
     print_center("by 8bit-acid-lab, feat. @ayalan", 64, 50, 7)
     print_center("⬅️⬆️⬇️➡️ move  z:select/swap    ", 64, 80, 6)
