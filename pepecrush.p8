@@ -46,6 +46,13 @@ function _init()
     wanted_new_bomb_tile_type = -1
     bomb_spr_offset = 16
     wait_frames_for_bomb = 6
+
+    -- for checking illegal moves
+    should_match_swapped_tiles = false
+    swapped_tile1_x = -1
+    swapped_tile1_y = -1
+    swapped_tile2_x = -1
+    swapped_tile2_y = -1
 end
 
 function inform_invalid_move()
@@ -120,7 +127,14 @@ function select_cursor()
             -- something was selected
             swap_tiles(cursor_select_x, cursor_select_y, cursor_x, cursor_y)
 
+            should_match_swapped_tiles = true
+            swapped_tile1_x = cursor_select_x
+            swapped_tile1_y = cursor_select_y
+            swapped_tile2_x = cursor_x
+            swapped_tile2_y = cursor_y
+
             if cursor_select_x == cursor_x and cursor_select_y == cursor_y then
+                should_match_swapped_tiles = false
                 -- sfx(32) -- TODO: cancel select sound
             else
                 sfx(14) -- Swap Position
@@ -183,6 +197,64 @@ function destroy_by_bomb(tile_type)
         sfx(24) -- Bomb1
         score += count * count
     end
+end
+
+function exists_match(x, y)
+    local tile_type = get_tile_type(tiles[x][y])
+
+    local count = 0
+    for i=1,tile_height do
+        if get_tile_type(tiles[i][x]) == tile_type then
+            count += 1
+        end
+    end
+    if count >= match_count then
+        return true
+    end
+
+    count = 0
+    for i=1,tile_width do
+        if get_tile_type(tiles[y][i]) == tile_type then
+            count += 1
+        end
+    end
+    if count >= match_count then
+        return true
+    end
+
+    return false
+end
+
+function exists_match_after_move(x0, y0, x1, y1)
+    local exists = false
+    swap_tiles(x0, y0, x1, y1)
+    if exists_match(x0, y0) then
+        exists = true
+    elseif exists_match(x1, y1) then
+        exists = true
+    end
+    swap_tiles(x0, y0, x1, y1)
+    return exists
+end
+
+function can_move()
+    for y=1,tile_height-1 do
+        for x=1,tile_width-1 do
+            if exists_match_after_move(x, y, x + 1, y) then
+                return true
+            end
+            if exists_match_after_move(x, y, x, y + 1) then
+                return true
+            end
+        end
+    end
+    if exists_match_after_move(tile_width, tile_height, tile_width - 1, tile_height) then
+        return true
+    end
+    if exists_match_after_move(tile_width, tile_height, tile_width, tile_height - 1) then
+        return true
+    end
+    return false
 end
 
 function get_tile_type(tile)
@@ -330,6 +402,7 @@ function update_game()
 
     local matched_count, matched_tile_type, include_bomb = clear_match()
     if matched_count > 0 then
+        should_match_swapped_tiles = false
         sfx(20) -- Line Clear
         if (time_left < (20 * 30)) and (time_left > (15 * 30)) then
             switch_to_normal_bgm_mode()
@@ -343,13 +416,17 @@ function update_game()
             make_bomb(matched_tile_type)
         end
         return
+    elseif should_match_swapped_tiles then
+        should_match_swapped_tiles = false
+        swap_tiles(swapped_tile1_x, swapped_tile1_y, swapped_tile2_x, swapped_tile2_y)
+        inform_invalid_move()
     end
 
     if not tiles_initialized then
         tiles_initialized = true
     end
 
-    if time_left <= 0 and game_state != 2 then
+    if (not can_move() or time_left <= 0) and game_state != 2 then
         game_state = 2
         music(-1, 300)
         sfx(22) -- Gameover -- TODO: Change the sound depending on the judgement?
