@@ -487,6 +487,20 @@ function draw_tiles()
 
     center_x = 64 - (tile_width * 8) / 2 + offset_x
     center_y = 64 - (tile_height * 8) / 2 + offset_y
+
+    for y=0,tile_height+1 do
+        xpos = center_x - 1 * 8
+        ypos = center_y + (y - 1) * 8
+        spr(33, xpos, ypos)
+        xpos = center_x + tile_width * 8
+        spr(33, xpos, ypos)
+    end
+    for x=1,tile_width do
+        xpos = center_x + (x - 1) * 8
+        ypos = center_y + tile_height * 8
+        spr(33, xpos, ypos)
+    end
+
     for y=1,tile_height do
         for x=1,tile_width do
             xpos = center_x + (x - 1) * 8
@@ -514,18 +528,6 @@ function draw_tiles()
                 rect(xpos, ypos, xpos + 7, ypos + 7, 7)
             end
         end
-    end
-    for y=0,tile_height+1 do
-        xpos = center_x - 1 * 8
-        ypos = center_y + (y - 1) * 8
-        spr(33, xpos, ypos)
-        xpos = center_x + tile_width * 8
-        spr(33, xpos, ypos)
-    end
-    for x=1,tile_width do
-        xpos = center_x + (x - 1) * 8
-        ypos = center_y + tile_height * 8
-        spr(33, xpos, ypos)
     end
 end
 
