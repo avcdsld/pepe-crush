@@ -24,6 +24,7 @@ game_state=0 -- 0:title, 1:game, 2:gameover
 
 title_music=9
 game_music=0
+game_music_fast=15
 music(title_music)
 
 function _init()
@@ -51,6 +52,18 @@ function inform_invalid_move()
     sfx(23) -- Invalid move
     wait_frames_for_angry_pepe = 30
     wait_frames_for_pepe = 0
+end
+
+function switch_to_normal_bgm_mode()
+    music(-1, 300)
+    music(game_music)
+    wait_frames_for_angry_pepe = 0
+end
+
+function switch_to_hurry_bgm_mode()
+    music(-1, 300)
+    music(game_music_fast)
+    wait_frames_for_angry_pepe = 20 * 30 -- 20 sec
 end
 
 function move_cursor()
@@ -318,6 +331,9 @@ function update_game()
     local matched_count, matched_tile_type, include_bomb = clear_match()
     if matched_count > 0 then
         sfx(20) -- Line Clear
+        if (time_left < (20 * 30)) and (time_left > (15 * 30)) then
+            switch_to_normal_bgm_mode()
+        end
         time_left += 5 * 30
         wait_frames_for_clearing = 5
         if include_bomb then
@@ -449,6 +465,9 @@ function draw_time_left()
     end
     if time_left > 0 then
         time_left -= 1
+    end
+    if time_left == 20 * 30 then
+        switch_to_hurry_bgm_mode()
     end
     local str = "" .. flr(time_left / 30)
     print_center("time", offset_x + 128, offset_y + 50, 7)
