@@ -30,10 +30,10 @@ game_music_fast=15
 music(title_music)
 
 function _init()
-    for x=1,tile_height do
-        tiles[x] = {}
-        for y=1,tile_width do
-            tiles[x][y] = -1
+    for y=1,tile_height do
+        tiles[y] = {}
+        for x=1,tile_width do
+            tiles[y][x] = -1
         end
     end
 
@@ -55,6 +55,11 @@ function _init()
     swapped_tile1_y = -1
     swapped_tile2_x = -1
     swapped_tile2_y = -1
+
+    -- hint message
+    display_hint = false
+    hint_x = -1
+    hint_y = -1
 end
 
 function inform_invalid_move()
@@ -119,7 +124,7 @@ function move_cursor_selected()
 end
 
 function select_cursor()
-    if btnp(4) or btnp(5) then
+    if btnp(4) then
         if cursor_select_x == -1 then
             -- select this tile
             cursor_select_x = cursor_x
@@ -201,26 +206,34 @@ function destroy_by_bomb(tile_type)
     end
 end
 
-function exists_match(x, y)
-    local tile_type = get_tile_type(tiles[x][y])
+function exists_match(_x, _y)
+    local tile_type = get_tile_type(tiles[_y][_x])
 
     local count = 0
     for i=1,tile_height do
-        if get_tile_type(tiles[i][x]) == tile_type then
+        if get_tile_type(tiles[i][_x]) == tile_type then
             count += 1
+        elseif match_count > count and count > 0 then
+            count = 0
         end
     end
     if count >= match_count then
+        hint_x = _x
+        hint_y = _y
         return true
     end
 
     count = 0
     for i=1,tile_width do
-        if get_tile_type(tiles[y][i]) == tile_type then
+        if get_tile_type(tiles[_y][i]) == tile_type then
             count += 1
+        elseif match_count > count and count > 0 then
+            count = 0
         end
     end
     if count >= match_count then
+        hint_x = _x
+        hint_y = _y
         return true
     end
 
@@ -250,11 +263,15 @@ function can_move()
             end
         end
     end
-    if exists_match_after_move(tile_width, tile_height, tile_width - 1, tile_height) then
-        return true
+    for y=1,tile_height-1 do
+        if exists_match_after_move(tile_width, y, tile_width, y + 1) then
+            return true
+        end
     end
-    if exists_match_after_move(tile_width, tile_height, tile_width, tile_height - 1) then
-        return true
+    for x=1,tile_width-1 do
+        if exists_match_after_move(x, tile_height, x + 1, tile_height) then
+            return true
+        end
     end
     return false
 end
@@ -435,7 +452,7 @@ function update_game()
     end
 
     if game_state == 2 then
-        if btnp(4) or btnp(5) then
+        if btnp(4) then
             _init()
             game_state = 1
             music(game_music)
@@ -456,6 +473,15 @@ function update_game()
         move_cursor_selected()
     end
     select_cursor()
+
+    -- press 'x' + '↓' to display hint
+    if btnp(5) and btnp(3) then
+        if display_hint then
+            display_hint = false
+        else
+            display_hint = true
+        end
+    end
 end
 
 function _update()
@@ -551,8 +577,9 @@ function draw_time_left()
     local str = "" .. flr(time_left / 30)
     print_center("time", offset_x + 128, offset_y + 50, 7)
     print_center(str, offset_x + 128, offset_y + 60, 7)
-    if not tiles_initialized then
-        return
+
+    if display_hint then
+        print("hint:"..hint_x..","..hint_y, 14, 115, 6)
     end
 end
 
