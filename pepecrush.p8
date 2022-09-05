@@ -7,10 +7,10 @@ __lua__
 -- tile stuff
 tiles={}
 tile_type_num=7
-tile_width=8
-tile_height=10
-offset_y=-2
-offset_x=-20
+tile_width=7
+tile_height=9
+offset_y=4
+offset_x=-15
 
 -- cursor stuff
 cursor_x=1
@@ -560,8 +560,8 @@ function draw_score()
         return
     end
     local str = "" .. score
-    print_center("score", offset_x + 128, offset_y + 25, 7)
-    print_center(str, offset_x + 128, offset_y + 35, 7)
+    print_center("score", 106, 30, 7)
+    print_center(str, 106, 40, 7)
 end
 
 function draw_time_left()
@@ -575,8 +575,8 @@ function draw_time_left()
         switch_to_hurry_bgm_mode()
     end
     local str = "" .. flr(time_left / 30)
-    print_center("time", offset_x + 128, offset_y + 50, 7)
-    print_center(str, offset_x + 128, offset_y + 60, 7)
+    print_center("time", 106, 55, 7)
+    print_center(str, 106, 65, 7)
 
     if display_hint then
         print("hint:"..hint_x..","..hint_y, 14, 115, 6)
@@ -584,8 +584,8 @@ function draw_time_left()
 end
 
 function draw_pepe()
-    local x = 94
-    local y = 78
+    local x = 92
+    local y = 80
 
     if wait_frames_for_angry_pepe > 0 then
         wait_frames_for_angry_pepe -= 1
