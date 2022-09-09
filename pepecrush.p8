@@ -152,7 +152,7 @@ end
 
 function draw_gameover()
  cls(8)
- print_c("you scored " .. score, 64, 30, 7)
+ print_c("you scored "..score,64,30,7)
  local judgement = "good effort!"
  if score > 250 then
   judgement = "wow! good job!!"
@@ -161,8 +161,8 @@ function draw_gameover()
  elseif score > 150 then
   judgement = "nice!"
  end
- print_c(judgement, 64, 40, 7)
- print_c("press z to restart", 60, 100, 7)
+ print_c(judgement,64,40,7)
+ print_c("press z to restart",60,100,7)
 end
 
 function make_bomb(tile_type)
@@ -488,7 +488,7 @@ end
 function draw_title()
  print_c("pepe crush", 64, 40, 7)
  print_c("by 8bit-acid-lab, feat. @ayalan", 64, 50, 7)
- print_c("⬅️⬆️⬇️➡️ move z:select/swap ", 64, 80, 6)
+ print_c("⬅️⬆️⬇️➡️ move  z:select/swap    ", 64, 80, 6)
  print_c("press z to start", 64, 90, 7)
 end
 
