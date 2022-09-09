@@ -7,10 +7,10 @@ __lua__
 -- tile stuff
 tiles={}
 type_num=7
-tilew=8
-tileh=10
-offsety=-2
-offsetx=-20
+tilew=7
+tileh=9
+offsety=4
+offsetx=-15
 
 -- cursor stuff
 cur_x=1
