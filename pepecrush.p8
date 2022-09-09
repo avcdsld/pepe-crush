@@ -52,6 +52,11 @@ function _init()
  swapped_y1=-1
  swapped_x2=-1
  swapped_y2=-1
+
+ -- hint message
+ display_hint = false
+ hint_x = -1
+ hint_y = -1
 end
 
 function inform_invalid_move()
@@ -116,7 +121,7 @@ function move_cursor_selected()
 end
 
 function select_cursor()
- if btnp(4) or btnp(5) then
+ if btnp(4) then
   if cur_slct_x == -1 then
    -- select this tile
    cur_slct_x=cur_x
@@ -198,15 +203,19 @@ function destroy_by_bomb(tile_type)
 end
 
 function exists_match(x, y)
- local tile_type=get_tile_type(tiles[x][y])
+ local tile_type = get_tile_type(tiles[y][x])
 
  local cnt=0
  for i=1,tileh do
   if get_tile_type(tiles[i][x]) == tile_type then
    cnt+=1
+  elseif match_cnt > cnt and cnt > 0 then
+   cnt=0
   end
  end
  if cnt >= match_cnt then
+  hint_x=x
+  hint_y=y
   return true
  end
 
@@ -214,9 +223,13 @@ function exists_match(x, y)
  for i=1,tilew do
   if get_tile_type(tiles[y][i]) == tile_type then
    cnt+=1
+  elseif match_cnt > cnt and cnt > 0 then
+   cnt=0
   end
  end
  if cnt >= match_cnt then
+  hint_x=x
+  hint_y=y
   return true
  end
 
@@ -421,7 +434,7 @@ function update_game()
  end
 
  if game_state == 2 then
-  if btnp(4) or btnp(5) then
+  if btnp(4) then
    _init()
    game_state=1
    music(0)
@@ -441,6 +454,15 @@ function update_game()
   move_cursor_selected()
  end
  select_cursor()
+
+ -- press 'x' + '↓' to display hint
+ if btnp(5) and btnp(3) then
+  if display_hint then
+   display_hint=false
+  else
+   display_hint=true
+  end
+ end
 end
 
 function _update()
