@@ -7,16 +7,16 @@ __lua__
 -- tile stuff
 tiles={}
 type_num=7
-tile_w=8
-tile_h=10
-offset_y=-2
-offset_x=-20
+tilew=8
+tileh=10
+offsety=-2
+offsetx=-20
 
 -- cursor stuff
 cur_x=1
 cur_y=1
-cur_select_x=-1
-cur_select_y=-1
+cur_slct_x=-1
+cur_slct_y=-1
 cur_blink=0
 cur_blink_fr=20
 
@@ -27,76 +27,76 @@ game_state=0 -- 0:title, 1:game, 2:gameover
 music(9)
 
 function _init()
- for x=1,tile_h do
-  tiles[x] = {}
-  for y=1,tile_w do
-   tiles[x][y] = -1
+ for x=1,tileh do
+  tiles[x]={}
+  for y=1,tilew do
+   tiles[x][y]=-1
   end
  end
 
- tiles_initialized = false
- wait_for_clearing = 0
- score = 0
- time_left = 60 * 30 -- 1 min
- wait_for_pepe = 0
- wait_for_angry_pepe = 0
+ tiles_initialized=false
+ wait_for_clearing=0
+ score=0
+ time_left=60*30 --1min
+ wait_for_pepe=0
+ wait_for_angry_pepe=0
 
  -- bomb
- wanted_new_bomb_tile_type = -1
- bomb_spr_offset = 16
- wait_for_bomb = 6
+ wanted_new_bomb_tile_type=-1
+ bomb_spr_offset=16
+ wait_for_bomb=6
 
  -- for checking illegal moves
- should_match_swapped_tiles = false
- swapped_tile1_x = -1
- swapped_tile1_y = -1
- swapped_tile2_x = -1
- swapped_tile2_y = -1
+ should_match=false
+ swapped_x1=-1
+ swapped_y1=-1
+ swapped_x2=-1
+ swapped_y2=-1
 end
 
 function inform_invalid_move()
  sfx(23) -- Invalid move
- wait_for_angry_pepe = 30
- wait_for_pepe = 0
+ wait_for_angry_pepe=30
+ wait_for_pepe=0
 end
 
 function switch_to_normal_bgm_mode()
- music(-1, 300)
+ music(-1,300)
  music(0)
- wait_for_angry_pepe = 0
+ wait_for_angry_pepe=0
 end
 
 function switch_to_hurry_bgm_mode()
- music(-1, 300)
+ music(-1,300)
  music(15)
- wait_for_angry_pepe = 20 * 30 -- 20 sec
+ wait_for_angry_pepe=20*30 --20sec
 end
 
 function move_cursor()
  if btnp(0) then
   if cur_x > 1 then
-   cur_x -= 1
+   cur_x-=1
   else
    inform_invalid_move()
   end
  end
  if btnp(1) then
-  if cur_x < tile_w then
-   cur_x += 1
+  if cur_x < tilew then
+   cur_x+=1
   else
    inform_invalid_move()
   end
  end
  if btnp(2) then
   if cur_y > 1 then
-   cur_y -= 1
+   cur_y-=1
   else
    inform_invalid_move()
   end
  end
  if btnp(3) then
-  if cur_y < tile_h then
-   cur_y += 1
+  if cur_y < tileh then
+   cur_y+=1
   else
    inform_invalid_move()
   end
@@ -105,50 +105,49 @@ end
 
 function move_cursor_selected()
  -- to revert position if we move too far away from selected tile
- local temp_x = cur_x
- local temp_y = cur_y
+ local tmp_x=cur_x
+ local tmp_y=cur_y
  move_cursor()
- if abs(cur_select_x - cur_x) + abs(cur_select_y - cur_y) > 1 then
-  cur_x = temp_x
-  cur_y = temp_y
+ if abs(cur_slct_x - cur_x) + abs(cur_slct_y - cur_y) > 1 then
+  cur_x=tmp_x
+  cur_y=tmp_y
   inform_invalid_move()
  end
 end
 
 function select_cursor()
  if btnp(4) or btnp(5) then
-  if cur_select_x == -1 then
+  if cur_slct_x == -1 then
    -- select this tile
-   cur_select_x = cur_x
-   cur_select_y = cur_y
+   cur_slct_x=cur_x
+   cur_slct_y=cur_y
    sfx(21) -- Object select
   else
    -- something was selected
-   swap_tiles(cur_select_x, cur_select_y, cur_x, cur_y)
+   swap_tiles(cur_slct_x,cur_slct_y,cur_x,cur_y)
 
-   should_match_swapped_tiles = true
-   swapped_tile1_x = cur_select_x
-   swapped_tile1_y = cur_select_y
-   swapped_tile2_x = cur_x
-   swapped_tile2_y = cur_y
+   should_match=true
+   swapped_x1=cur_slct_x
+   swapped_y1=cur_slct_y
+   swapped_x2=cur_x
+   swapped_y2=cur_y
 
-   if cur_select_x == cur_x and cur_select_y == cur_y then
-    should_match_swapped_tiles = false
-    -- sfx(32) -- TODO: cancel select sound
+   if cur_slct_x == cur_x and cur_slct_y == cur_y then
+    should_match=false
    else
     sfx(14) -- Swap Position
    end
 
    -- reset selection
-   cur_select_x = -1
-   cur_select_y = -1
+   cur_slct_x=-1
+   cur_slct_y=-1
   end
  end
 end
 
 function draw_gameover()
  cls(8)
- print_center("you scored " .. score, 64, 30, 7)
+ print_c("you scored " .. score, 64, 30, 7)
  local judgement = "good effort!"
  if score > 250 then
   judgement = "wow! good job!!"
@@ -157,77 +156,77 @@ function draw_gameover()
  elseif score > 150 then
   judgement = "nice!"
  end
- print_center(judgement, 64, 40, 7)
- print_center("press z to restart", 60, 100, 7)
+ print_c(judgement, 64, 40, 7)
+ print_c("press z to restart", 60, 100, 7)
 end
 
 function make_bomb(tile_type)
- local candidates_count = 0
- local candidates_x = {}
- local candidates_y = {}
- for y=1,tile_h do
-  for x=1,tile_w do
+ local cnt=0
+ local candidates_x={}
+ local candidates_y={}
+ for y=1,tileh do
+  for x=1,tilew do
    if tiles[y][x] == tile_type then
-    candidates_count += 1
-    candidates_x[candidates_count] = x
-    candidates_y[candidates_count] = y
+    cnt+=1
+    candidates_x[cnt]=x
+    candidates_y[cnt]=y
    end
   end
  end
- if candidates_count == 0 then
-  wanted_new_bomb_tile_type = tile_type + bomb_spr_offset
+ if cnt == 0 then
+  wanted_new_bomb_tile_type=tile_type+bomb_spr_offset
  else
-  local num = flr(rnd(candidates_count)) + 1
+  local num = flr(rnd(cnt)) + 1
   tiles[candidates_y[num]][candidates_x[num]] = tile_type + bomb_spr_offset
  end
 end
 
 function destroy_by_bomb(tile_type)
- local count = 0
- for y=1,tile_h do
-  for x=1,tile_w do
+ local cnt=0
+ for y=1,tileh do
+  for x=1,tilew do
    if get_tile_type(tiles[y][x]) == tile_type then
-    tiles[y][x] = -1
-    count += 1
+    tiles[y][x]=-1
+    cnt+=1
    end
   end
  end
- if count > 0 then
-  sfx(24) -- Bomb1
-  score += count * count
+ if cnt > 0 then
+  sfx(24) -- Bomb
+  score+=cnt*cnt
  end
 end
 
 function exists_match(x, y)
- local tile_type = get_tile_type(tiles[x][y])
+ local tile_type=get_tile_type(tiles[x][y])
 
- local count = 0
- for i=1,tile_h do
+ local cnt=0
+ for i=1,tileh do
   if get_tile_type(tiles[i][x]) == tile_type then
-   count += 1
+   cnt+=1
   end
  end
- if count >= match_cnt then
+ if cnt >= match_cnt then
   return true
  end
 
- count = 0
- for i=1,tile_w do
+ cnt=0
+ for i=1,tilew do
   if get_tile_type(tiles[y][i]) == tile_type then
-   count += 1
+   cnt+=1
   end
  end
- if count >= match_cnt then
+ if cnt >= match_cnt then
   return true
  end
 
  return false
 end
 
-function exists_match_after_move(x0, y0, x1, y1)
- local exists = false
- swap_tiles(x0, y0, x1, y1)
- if exists_match(x0, y0) then
+function exists_match_after_move(x0,y0,x1,y1)
+ local exists=false
+ swap_tiles(x0,y0,x1,y1)
+ if exists_match(x0,y0) then
   exists = true
  elseif exists_match(x1, y1) then
   exists = true
@@ -237,20 +236,20 @@ function exists_match_after_move(x0, y0, x1, y1)
 end
 
 function can_move()
- for y=1,tile_h-1 do
-  for x=1,tile_w-1 do
-   if exists_match_after_move(x, y, x + 1, y) then
+ for y=1,tileh-1 do
+  for x=1,tilew-1 do
+   if exists_match_after_move(x,y,x+1,y) then
     return true
    end
-   if exists_match_after_move(x, y, x, y + 1) then
+   if exists_match_after_move(x,y,x,y+1) then
     return true
    end
   end
  end
- if exists_match_after_move(tile_w, tile_h, tile_w - 1, tile_h) then
+ if exists_match_after_move(tilew,tileh,tilew-1,tileh) then
   return true
  end
- if exists_match_after_move(tile_w, tile_h, tile_w, tile_h - 1) then
+ if exists_match_after_move(tilew,tileh,tilew,tileh-1) then
   return true
  end
  return false
@@ -258,79 +257,79 @@ end
 
 function get_tile_type(tile)
  if tile > type_num then
-  return tile - bomb_spr_offset
+  return tile-bomb_spr_offset
  end
  return tile
 end
 
--- returns: cleared_count, tile_type, include_bomb
+-- returns: cleared_cnt, tile_type, include_bomb
 function clear_match()
- for y=1,tile_h do
-  for x=1,tile_w do
-   local tile_type = get_tile_type(tiles[y][x])
+ for y=1,tileh do
+  for x=1,tilew do
+   local tile_type=get_tile_type(tiles[y][x])
 
    -- horizontal
-   local count = 0
-   for x1=x,tile_w do
+   local cnt = 0
+   for x1=x,tilew do
     if get_tile_type(tiles[y][x1]) == tile_type then
-     count += 1
+     cnt+=1
     else
      break
     end
    end
-   if count >= match_cnt then
-    local include_bomb = clear_horizontally(x,y,count)
-    score += count * count
-    return count, tile_type, include_bomb
+   if cnt >= match_cnt then
+    local include_bomb=clear_horizontally(x,y,cnt)
+    score+=cnt*cnt
+    return cnt,tile_type,include_bomb
    end
 
    -- vertical
-   count = 0
-   for y1=y,tile_h do
+   cnt=0
+   for y1=y,tileh do
     if get_tile_type(tiles[y1][x]) == tile_type then
-     count += 1
+     cnt+=1
     else
      break
     end
    end
-   if count >= match_cnt then
-    local include_bomb = clear_vertically(x,y,count)
-    score += count * count
-    return count, tile_type, include_bomb
+   if cnt >= match_cnt then
+    local include_bomb=clear_vertically(x,y,cnt)
+    score+=cnt*cnt
+    return cnt,tile_type,include_bomb
    end
   end
  end
- return 0, 0, false
+ return 0,0,false
 end
 
-function clear_horizontally(x,y,count)
- local include_bomb = false
- for i=0,count-1 do
+function clear_horizontally(x,y,cnt)
+ local include_bomb=false
+ for i=0,cnt-1 do
   if tiles[y][x+i] > type_num then
-   include_bomb = true
+   include_bomb=true
   end
-  tiles[y][x+i] = -1
+  tiles[y][x+i]=-1
  end
  return include_bomb
 end
 
-function clear_vertically(x,y,count)
- local include_bomb = false
- for i=0,count-1 do
-  if y + i > tile_h then
+function clear_vertically(x,y,cnt)
+ local include_bomb=false
+ for i=0,cnt-1 do
+  if y+i > tileh then
    break
   end
   if tiles[y+i][x] > type_num then
-   include_bomb = true
+   include_bomb=true
   end
-  tiles[y+i][x] = -1
+  tiles[y+i][x]=-1
  end
  return include_bomb
 end
 
 function exists_empty_tiles()
- for y=1,tile_h do
-  for x=1,tile_w do
+ for y=1,tileh do
+  for x=1,tilew do
    if tiles[y][x] < 1 then
     return true
    end
@@ -339,53 +338,43 @@ function exists_empty_tiles()
  return false
 end
 
-function swap_tiles(x0, y0, x1, y1)
- t0 = tiles[y0][x0]
- t1 = tiles[y1][x1]
- tiles[y0][x0] = t1
- tiles[y1][x1] = t0
+function swap_tiles(x0,y0,x1,y1)
+ t0=tiles[y0][x0]
+ t1=tiles[y1][x1]
+ tiles[y0][x0]=t1
+ tiles[y1][x1]=t0
 end
 
 function move_down_tiles()
- for y=tile_h,2,-1 do
-  for x=1,tile_w do
+ for y=tileh,2,-1 do
+  for x=1,tilew do
    if tiles[y][x] < 1 and tiles[y-1][x] > 0 then
-    swap_tiles(x, y, x, y - 1)
-    -- sfx(3) -- TODO: sound
+    swap_tiles(x,y,x,y-1)
     if tiles_initialized then
      return
     end
    end
   end
  end
- -- sfx(32) -- TODO: sound
 end
 
 function fill_top_tiles()
- for x=1,tile_w do
+ for x=1,tilew do
   if tiles[1][x] < 1 then
    if wanted_new_bomb_tile_type > 0 then
-    tiles[1][x] = wanted_new_bomb_tile_type
-    wanted_new_bomb_tile_type = -1
+    tiles[1][x]=wanted_new_bomb_tile_type
+    wanted_new_bomb_tile_type=-1
    else
-    tiles[1][x] = flr(rnd(type_num)) + 1
+    tiles[1][x]=flr(rnd(type_num))+1
    end
   end
  end
 end
 
-function update_title()
- if btnp(4) then
-  game_state = 1
-  music(-1, 300)
-  music(game_music)
- end
-end
-
 function update_game()
  if not tiles_initialized then
-  score = 0
-  time_left = 60 * 30 -- 1 min
+  score=0
+  time_left=60*30 --1min
  end
 
  if exists_empty_tiles() then
@@ -395,29 +384,29 @@ function update_game()
  end
 
  if wait_for_clearing > 0 then
-  wait_for_clearing -= 1
+  wait_for_clearing-=1
   return
  end
 
- local matched_count, matched_tile_type, include_bomb = clear_match()
- if matched_count > 0 then
-  should_match_swapped_tiles = false
+ local matched_cnt,matched_tile_type,include_bomb=clear_match()
+ if matched_cnt > 0 then
+  should_match=false
   sfx(20) -- Line Clear
-  if (time_left < (20 * 30)) and (time_left > (15 * 30)) then
+  if (time_left < 20*30) and (time_left > 15*30) then
    switch_to_normal_bgm_mode()
   end
-  time_left += 5 * 30
-  wait_for_clearing = 5
+  time_left+=5*30
+  wait_for_clearing=5
   if include_bomb then
    destroy_by_bomb(matched_tile_type)
   end
-  if matched_count >= 4 then
+  if matched_cnt >= 4 then
    make_bomb(matched_tile_type)
   end
   return
- elseif should_match_swapped_tiles then
-  should_match_swapped_tiles = false
-  swap_tiles(swapped_tile1_x, swapped_tile1_y, swapped_tile2_x, swapped_tile2_y)
+ elseif should_match then
+  should_match=false
+  swap_tiles(swapped_x1,swapped_y1,swapped_x2,swapped_y2)
   inform_invalid_move()
  end
 
@@ -428,26 +417,25 @@ function update_game()
  if (not can_move() or time_left <= 0) and game_state != 2 then
   game_state = 2
   music(-1, 300)
-  sfx(22) -- Gameover -- TODO: Change the sound depending on the judgement?
+  sfx(22) -- Gameover
  end
 
  if game_state == 2 then
   if btnp(4) or btnp(5) then
    _init()
-   game_state = 1
-   music(game_music)
+   game_state=1
+   music(0)
   end
   return
  end
 
- -- selected cursor blink
- cur_blink += 1
+ cur_blink+=1
  if cur_blink > cur_blink_fr then
-  cur_blink = 0
+  cur_blink=0
  end
 
  -- cursor movement
- if cur_select_x == -1 then
+ if cur_slct_x == -1 then
   move_cursor()
  else
   move_cursor_selected()
@@ -457,79 +445,80 @@ end
 
 function _update()
  if game_state == 0 then
-  update_title()
+  if btnp(4) then
+   game_state=1
+   music(-1,300)
+   music(0)
+  end
  else
   update_game()
  end
 end
 
-function print_center(s,x,y,c)
- local tx = x - ((#s * 4)/2)
- print(s, tx, y, c)
+function print_c(s,x,y,c)
+ print(s,x-((#s * 4)/2),y,c)
 end
 
 function draw_title()
- print_center("pepe crush", 64, 40, 7)
- print_center("by 8bit-acid-lab, feat. @ayalan", 64, 50, 7)
- print_center("⬅️⬆️⬇️➡️ move z:select/swap ", 64, 80, 6)
- print_center("press z to start", 64, 90, 7)
+ print_c("pepe crush", 64, 40, 7)
+ print_c("by 8bit-acid-lab, feat. @ayalan", 64, 50, 7)
+ print_c("⬅️⬆️⬇️➡️ move z:select/swap ", 64, 80, 6)
+ print_c("press z to start", 64, 90, 7)
 end
 
 function draw_tiles()
  if wait_for_bomb > 0 then
-  wait_for_bomb -= 1
+  wait_for_bomb-=1
  else
-  wait_for_bomb = 6
+  wait_for_bomb=6
  end
 
- center_x = 64 - (tile_w * 8) / 2 + offset_x
- center_y = 64 - (tile_h * 8) / 2 + offset_y
+ cx=64-(tilew*8)/2+offsetx
+ cy=64-(tileh*8)/2+offsety
 
- for y=0,tile_h+1 do
-  xpos = center_x - 1 * 8
-  ypos = center_y + (y - 1) * 8
-  spr(33, xpos, ypos)
-  xpos = center_x + tile_w * 8
-  spr(33, xpos, ypos)
- end
- for x=1,tile_w do
-  xpos = center_x + (x - 1) * 8
-  ypos = center_y + tile_h * 8
+ for y=0,tileh+1 do
+  xpos=cx-1*8
+  ypos=cy+(y-1)*8
+  spr(33,xpos,ypos)
+  xpos=cx+tilew*8
   spr(33, xpos, ypos)
  end
+ for x=1,tilew do
+  xpos=cx+(x-1)*8
+  ypos=cy+tileh*8
+  spr(33,xpos,ypos)
+ end
 
- for y=1,tile_h do
-  for x=1,tile_w do
-   xpos = center_x + (x - 1) * 8
-   ypos = center_y + (y - 1) * 8
-   local spr_num = tiles[y][x]
-
+ for y=1,tileh do
+  for x=1,tilew do
+   xpos=cx+(x-1)*8
+   ypos=cy+(y-1)*8
+   local n=tiles[y][x]
    -- for bomb blink
    if tiles[y][x] > type_num then
-    if wait_for_bomb % 6 >= 3 then
-     spr_num -= bomb_spr_offset
+    if wait_for_bomb%6 >= 3 then
+     n-=bomb_spr_offset
     end
    end
-
-   spr(spr_num, xpos, ypos)
+   spr(n,xpos,ypos)
   end
  end
 
- for y=1,tile_h do
-  for x=1,tile_w do
-   xpos = center_x + (x - 1) * 8
-   ypos = center_y + (y - 1) * 8
+ for y=1,tileh do
+  for x=1,tilew do
+   xpos=cx+(x-1)*8
+   ypos=cy+(y-1)*8
 
-   local cursor_color = 7
-   if cur_select_x != -1 then
-    cursor_color = 14
+   local c=7
+   if cur_slct_x != -1 then
+    c=14
    end
    if x == cur_x and y == cur_y then
-    rect(xpos - 1, ypos - 1, xpos + 8, ypos + 8, cursor_color)
+    rect(xpos-1,ypos-1,xpos+8,ypos+8,c)
    end
 
-   if x==cur_select_x and y==cur_select_y and cur_blink > cur_blink_fr/2 then
-    rect(xpos, ypos, xpos + 7, ypos + 7, 7)
+   if x==cur_slct_x and y==cur_slct_y and cur_blink > cur_blink_fr/2 then
+    rect(xpos,ypos,xpos+7,ypos+7,7)
    end
   end
  end
@@ -539,9 +528,9 @@ function draw_score()
  if not tiles_initialized then
   return
  end
- local str = "" .. score
- print_center("score", offset_x + 128, offset_y + 25, 7)
- print_center(str, offset_x + 128, offset_y + 35, 7)
+ local str=""..score
+ print_c("score",offsetx+128,offsety+25,7)
+ print_c(str,offsetx+128,offsety+35,7)
 end
 
 function draw_time_left()
@@ -549,65 +538,65 @@ function draw_time_left()
   return
  end
  if time_left > 0 then
-  time_left -= 1
+  time_left-=1
  end
- if time_left == 20 * 30 then
+ if time_left == 20*30 then
   switch_to_hurry_bgm_mode()
  end
- local str = "" .. flr(time_left / 30)
- print_center("time", offset_x + 128, offset_y + 50, 7)
- print_center(str, offset_x + 128, offset_y + 60, 7)
+ local str=""..flr(time_left/30)
+ print_c("time",offsetx+128,offsety+50,7)
+ print_c(str,offsetx+128,offsety+60,7)
  if not tiles_initialized then
   return
  end
 end
 
 function draw_pepe()
- local x = 94
- local y = 78
+ local x=94
+ local y=78
 
  if wait_for_angry_pepe > 0 then
-  wait_for_angry_pepe -= 1
-  local spr_num = 140 -- angry pepe
-  local offset = 0
-  if wait_for_angry_pepe % 4 >= 2 then
-   offset = 1
+  wait_for_angry_pepe-=1
+  local n=140 -- angry pepe
+  local offset=0
+  if wait_for_angry_pepe%4 >= 2 then
+   offset=1
   end
-  spr(spr_num, x + offset, y, 4, 4)
+  spr(n,x+offset,y,4,4)
   return
  end
 
  if wait_for_pepe > 0 then
-  wait_for_pepe -= 1
+  wait_for_pepe-=1
  else
-  wait_for_pepe = 150
+  wait_for_pepe=150
  end
 
- local spr_num = 12 -- opened eyes
+ local n=12 -- opened eyes
  if wait_for_pepe < 4 then
-  spr_num = 64 -- half opened eyes
+  n=64 -- half opened eyes
  elseif wait_for_pepe < 8 then
-  spr_num = 68 -- closed eyes
+  n=68 -- closed eyes
  elseif wait_for_pepe < 12 then
-  spr_num = 64 -- half opened eyes
+  n=64 -- half opened eyes
  elseif wait_for_pepe < 16 then
-  spr_num = 68 -- closed eyes
+  n=68 -- closed eyes
  elseif wait_for_pepe < 20 then
-  spr_num = 64 -- half opened eyes
+  n=64 -- half opened eyes
  end
- spr(spr_num, x, y, 4, 4)
+ spr(n,x,y,4,4)
 end
 
 function draw_time_left_bar()
  if not tiles_initialized then
   return
  end
- local num = time_left / 30 / 5
- local str = ""
+ local num=time_left/30/5
+ local str=""
  for i=1,num do
-  str = str .. "|"
+  str=str.."|"
  end
- print(str, offset_x + 25, offset_y + 118, 7)
+ print(str,offsetx+25,offsety+118,7)
 end
 
 function draw_game()
