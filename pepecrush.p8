@@ -474,7 +474,7 @@ function update_game()
     end
     select_cursor()
 
-    -- press 'x' + 'ヌ●⧗' to display hint
+    -- press 'x' + '↓' to display hint
     if btnp(5) and btnp(3) then
         if display_hint then
             display_hint = false
@@ -996,4 +996,3 @@ __music__
 04 17424344
 04 25584344
 00 66424344
-
