@@ -27,10 +27,10 @@ game_state=0 -- 0:title, 1:game, 2:gameover
 music(9)
 
 function _init()
- for x=1,tileh do
-  tiles[x]={}
-  for y=1,tilew do
-   tiles[x][y]=-1
+ for y=1,tileh do
+  tiles[y]={}
+  for x=1,tilew do
+   tiles[y][x]=-1
   end
  end
 
