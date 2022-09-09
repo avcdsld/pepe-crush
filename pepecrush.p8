@@ -554,9 +554,8 @@ function draw_score()
  if not tiles_initialized then
   return
  end
- local str=""..score
- print_c("score",offsetx+128,offsety+25,7)
- print_c(str,offsetx+128,offsety+35,7)
+ print_c("score",106,30,7)
+ print_c(""..score,106,40,7)
 end
 
 function draw_time_left()
@@ -569,17 +568,16 @@ function draw_time_left()
  if time_left == 20*30 then
   switch_to_hurry_bgm_mode()
  end
- local str=""..flr(time_left/30)
- print_c("time",offsetx+128,offsety+50,7)
- print_c(str,offsetx+128,offsety+60,7)
+ print_c("time",106,55,7)
+ print_c(""..flr(time_left/30),106,65,7)
  if display_hint then
   print("hint:"..hint_x..","..hint_y,14,115,6)
  end
 end
 
 function draw_pepe()
- local x=94
- local y=78
+ local x=92
+ local y=80
 
  if wait_for_angry_pepe > 0 then
   wait_for_angry_pepe-=1
