@@ -54,9 +54,9 @@ function _init()
  swapped_y2=-1
 
  -- hint message
- display_hint = false
- hint_x = -1
- hint_y = -1
+ display_hint=false
+ hint_x=-1
+ hint_y=-1
 end
 
 function inform_invalid_move()
@@ -241,10 +241,10 @@ function exists_match_after_move(x0,y0,x1,y1)
  swap_tiles(x0,y0,x1,y1)
  if exists_match(x0,y0) then
   exists = true
- elseif exists_match(x1, y1) then
+ elseif exists_match(x1,y1) then
   exists = true
  end
- swap_tiles(x0, y0, x1, y1)
+ swap_tiles(x0,y0,x1,y1)
  return exists
 end
 
@@ -259,11 +259,15 @@ function can_move()
    end
   end
  end
- if exists_match_after_move(tilew,tileh,tilew-1,tileh) then
-  return true
+ for y=1,tile_height-1 do
+  if exists_match_after_move(tilew,y,tilew,y+1) then
+   return true
+  end
  end
- if exists_match_after_move(tilew,tileh,tilew,tileh-1) then
-  return true
+ for x=1,tile_width-1 do
+  if exists_match_after_move(x,tileh,x+1,tileh) then
+   return true
+  end
  end
  return false
 end
@@ -568,8 +572,8 @@ function draw_time_left()
  local str=""..flr(time_left/30)
  print_c("time",offsetx+128,offsety+50,7)
  print_c(str,offsetx+128,offsety+60,7)
- if not tiles_initialized then
-  return
+ if display_hint then
+  print("hint:"..hint_x..","..hint_y,14,115,6)
  end
 end
 
