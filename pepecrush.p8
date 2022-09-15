@@ -286,32 +286,41 @@ function clear_match()
    local tile_type=get_tile_type(tiles[y][x])
 
    -- horizontal
-   local cnt = 0
+   local cnt_h=0
    for x1=x,tilew do
     if get_tile_type(tiles[y][x1]) == tile_type then
-     cnt+=1
+     cnt_h+=1
     else
      break
     end
-   end
-   if cnt >= match_cnt then
-    local include_bomb=clear_horizontally(x,y,cnt)
-    score+=cnt*cnt
-    return cnt,tile_type,include_bomb
    end
 
    -- vertical
-   cnt=0
+   local cnt_v=0
    for y1=y,tileh do
     if get_tile_type(tiles[y1][x]) == tile_type then
-     cnt+=1
+     cnt_v+=1
     else
      break
     end
    end
-   if cnt >= match_cnt then
-    local include_bomb=clear_vertically(x,y,cnt)
-    score+=cnt*cnt
+
+   local include_bomb=false
+   if cnt_h >= match_cnt then
+    local include_bomb_h=clear_horizontally(x,y,cnt_h)
+    include_bomb=include_bomb or include_bomb_h
+    score+=cnt_h*cnt_h
+   end
+   if cnt_v >= match_cnt then
+    local include_bomb_v=clear_vertically(x,y,cnt_v)
+    include_bomb=include_bomb or include_bomb_h
+    score+=cnt_v*cnt_v
+   end
+   if cnt_h >= match_cnt or cnt_v >= match_cnt then
+    local cnt=cnt_h
+    if cnt_v > cnt then
+     cnt=cnt_v
+    end
     return cnt,tile_type,include_bomb
    end
   end
