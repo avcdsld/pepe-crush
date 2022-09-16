@@ -57,6 +57,22 @@ function _init()
  display_hint=false
  hint_x=-1
  hint_y=-1
+
+ -- stars in start screen
+ star_x={}
+ star_y={}
+ star_speed={}
+ star_blink_wait={}
+ star_blink_current_wait={}
+ for i=1,30 do
+  add(star_x,flr(rnd(128)))
+  add(star_y,flr(rnd(128)))
+  add(star_speed,rnd(1.0)+0.5)
+  local wait=flr(rnd(5*30)+1*30)
+  add(star_blink_wait,wait)
+  add(star_blink_current_wait,wait)
+ end
+ wait_for_star=2
 end
 
 function inform_invalid_move()
@@ -486,10 +502,94 @@ function print_c(s,x,y,c)
 end
 
 function draw_title()
- print_c("pepe crush", 64, 40, 7)
- print_c("by 8bit-acid-lab, feat. @ayalan", 64, 50, 7)
- print_c("⬅️⬆️⬇️➡️ move  z:select/swap    ", 64, 80, 6)
- print_c("press z to start", 64, 90, 7)
+ for i=1,#star_x do
+  local color = 6
+  local color2 = 13
+  if star_speed[i] < 1.0 then
+   color = 13
+   color2 = 1
+  elseif star_speed[i] < 0.75 then
+   color = 1
+   color2 = 1
+  end
+  
+  if star_blink_current_wait[i] > 0 then
+   star_blink_current_wait[i]-=1
+   if star_blink_current_wait[i] < 6 then
+    color = 1
+    color2 = 1
+   end
+  else
+   star_blink_current_wait[i]=star_blink_wait[i]
+  end
+
+  pset(star_x[i], star_y[i], color)
+  pset(star_x[i] + 1, star_y[i], color2)
+  pset(star_x[i], star_y[i] + 1, color2)
+  pset(star_x[i] - 1, star_y[i], color2)
+  pset(star_x[i], star_y[i] - 1, color2)
+ end
+ 
+if wait_for_star > 0 then
+ wait_for_star-=1
+else
+ wait_for_star=2
+ 
+ for i=1,#star_y do
+  local inv=-1
+  if flr(rnd(2)) == 0 then
+   inv=1
+  end
+  
+  local sy = star_y[i]
+  sy += star_speed[i]
+  if sy > 128 then
+   sy -= 128
+   elseif sy < 0 then
+   sy += 128
+  end
+  star_y[i] = sy
+
+  if flr(rnd(10)) == 0 then
+   local sx = star_x[i]
+   sx += 1 * inv
+   if sx > 128 then
+    sx -= 128
+   elseif sx < 0 then
+    sx += 128
+   end
+   star_x[i] = sx
+  end
+ end
+ end
+
+ local x=64-16
+ local y=64-16+5
+
+ if wait_for_pepe > 0 then
+  wait_for_pepe-=1
+ else
+  wait_for_pepe=150
+ end
+
+ local n=12 -- opened eyes
+ if wait_for_pepe < 4 then
+  n=64 -- half opened eyes
+ elseif wait_for_pepe < 8 then
+  n=68 -- closed eyes
+ elseif wait_for_pepe < 12 then
+  n=64 -- half opened eyes
+ elseif wait_for_pepe < 16 then
+  n=68 -- closed eyes
+ elseif wait_for_pepe < 20 then
+  n=64 -- half opened eyes
+ end
+ spr(n,x,y,4,4)
+
+ print_c("pepe crush", 64, 20, 7)
+ print_c("by 8bit-acid-lab, feat. @ayalan", 64, 30, 7)
+ print_c("⬅️⬆️⬇️➡️ move  z:select/swap    ", 64, 100, 6)
+ print_c("press z to start", 64, 110, 7)
 end
 
 function draw_tiles()
