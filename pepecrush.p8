@@ -313,7 +313,7 @@ function clear_match()
    end
    if cnt_v >= match_cnt then
     local include_bomb_v=clear_vertically(x,y,cnt_v)
-    include_bomb=include_bomb or include_bomb_h
+    include_bomb=include_bomb or include_bomb_v
     score+=cnt_v*cnt_v
    end
    if cnt_h >= match_cnt or cnt_v >= match_cnt then
