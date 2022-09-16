@@ -429,7 +429,7 @@ end
 function update_game()
  if not tiles_initialized then
   score=0
-  time_left=60*30 --1min -- TODO: revert
+  time_left=60*30 --1min
  end
 
  if exists_empty_tiles() then
