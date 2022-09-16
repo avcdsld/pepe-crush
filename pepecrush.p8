@@ -154,7 +154,7 @@ end
 
 function draw_gameover()
  cls(0)
- print("game over!",20,25,7)
+ print("game over",20,25,7)
  print(gameover_reason,20,35,7)
  print("score: "..score,20,50,7)
 
@@ -173,7 +173,7 @@ function draw_gameover()
  end
 
  local x=85
- local y=45
+ local y=55
  local n=8 -- opened eyes
  if wait_for_pepe < 4 then
   n=64 -- half opened eyes
@@ -429,7 +429,7 @@ end
 function update_game()
  if not tiles_initialized then
   score=0
-  time_left=5*30 --1min -- TODO: revert
+  time_left=60*30 --1min -- TODO: revert
  end
 
  if exists_empty_tiles() then
@@ -472,9 +472,9 @@ function update_game()
  if (not can_move() or time_left <= 0) and game_state != 2 then
   game_state=2
   if time_left <= 0 then
-   gameover_reason="time is up"
+   gameover_reason="out of time!"
   else
-   gameover_reason="ran out of moves"
+   gameover_reason="no remaining moves!"
   end
   gameover_screen_slct=0
   music(-1, 300)
@@ -494,7 +494,7 @@ function update_game()
  end
  select_cursor()
 
- -- press 'x' + 'ヌ●⧗' to display hint
+ -- press 'x' + '⬇️' to display hint
  if btnp(5) and btnp(3) then
   if display_hint then
    display_hint=false
