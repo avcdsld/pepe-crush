@@ -645,6 +645,7 @@ else
 
  print_c("hairpepe super shine", 64, 20, 7)
  print_c("by @ayalan with @8bitacidlab", 64, 30, 7)
+ print_c("⬅️⬆️⬇️➡️ move z:select/swap ", 64, 100, 6)
  print_c("press z to start", 64, 110, 7)
 end
 
@@ -767,12 +768,24 @@ function draw_pepe()
  spr(n,x,y,4,4)
 end
 
+function draw_time_left_bar()
+ if not tiles_initialized then
+  return
+ end
+ local num=time_left/30/5
+ local str=""
+ for i=1,num do
+  str=str.."|"
+ end
+ print(str,offsetx+25,offsety+118,7)
+end
+
 function draw_game()
  draw_tiles()
  draw_score()
  draw_time_left()
  draw_pepe()
- print("⬅️⬆️⬇️➡️ move  z:select/swap", 13, 120, 13)
+ draw_time_left_bar()
 end
 
 function _draw()
