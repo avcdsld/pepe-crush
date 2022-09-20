@@ -645,7 +645,6 @@ else
 
  print_c("hairpepe super shine", 64, 20, 7)
  print_c("by @ayalan with @8bitacidlab", 64, 30, 7)
- print_c("⬅️⬆️⬇️➡️ move  z:select/swap    ", 64, 100, 6)
  print_c("press z to start", 64, 110, 7)
 end
 
