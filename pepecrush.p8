@@ -537,8 +537,8 @@ function _update()
  if game_state == 0 then
   if btnp(4) then
    game_state=1
-   music(-1,300)
-   music(25)
+   music(-1,300,13)
+   music(25,0,13)
   end
  elseif game_state == 1 then
   update_game()
@@ -552,7 +552,7 @@ function _update()
    else
     _init()
     game_state=1
-    music(25)
+    music(25,0,13)
    end
   end
 
