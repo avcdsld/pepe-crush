@@ -337,51 +337,77 @@ function get_tile_type(tile)
  return tile
 end
 
--- returns: cleared_cnt, tile_type, include_bomb
+-- returns: max_matched_cnt, tile_type, include_bomb
 function clear_match()
+ local max_cnt=0
+ local include_bomb=false
+ local tile_type=-1
+ local horizontal_matched=false
+ local vertical_matched=false
  for y=1,tileh do
   for x=1,tilew do
-   local tile_type=get_tile_type(tiles[y][x])
+   local tt=get_tile_type(tiles[y][x])
+   if tile_type > 0 and tt == -1 then
+    tt=tile_type
+   end
+   if tile_type > 0 and not (tile_type == tt) then
+    goto continue
+   end
 
    -- horizontal
    local cnt_h=0
-   for x1=x,tilew do
-    if get_tile_type(tiles[y][x1]) == tile_type then
-     cnt_h+=1
-    else
-     break
+   if not horizontal_matched then
+    for x1=x,tilew do
+     local t=get_tile_type(tiles[y][x1])
+     if t == -1 or t == tt then
+      cnt_h+=1
+     else
+      break
+     end
     end
    end
 
    -- vertical
    local cnt_v=0
-   for y1=y,tileh do
-    if get_tile_type(tiles[y1][x]) == tile_type then
-     cnt_v+=1
-    else
-     break
+   if not vertical_matched then
+    for y1=y,tileh do
+     local t=get_tile_type(tiles[y1][x])
+     if t == -1 or t == tt then
+      cnt_v+=1
+     else
+      break
+     end
     end
    end
 
-   local include_bomb=false
    if cnt_h >= match_cnt then
     local include_bomb_h=clear_horizontally(x,y,cnt_h)
     include_bomb=include_bomb or include_bomb_h
     score+=cnt_h*cnt_h
+    tile_type=tt
+    horizontal_matched=true
    end
    if cnt_v >= match_cnt then
     local include_bomb_v=clear_vertically(x,y,cnt_v)
     include_bomb=include_bomb or include_bomb_v
     score+=cnt_v*cnt_v
+    tile_type=tt
+    vertical_matched=true
    end
    if cnt_h >= match_cnt or cnt_v >= match_cnt then
-    local cnt=cnt_h
-    if cnt_v > cnt then
-     cnt=cnt_v
+    if cnt_h > max_cnt then
+     max_cnt=cnt_h
     end
-    return cnt,tile_type,include_bomb
+    if cnt_v > max_cnt then
+     max_cnt=cnt_v
+    end
    end
+
+   ::continue::
   end
+ end
+ if horizontal_matched or vertical_matched then
+  return max_cnt,tile_type,include_bomb
  end
  return 0,0,false
 end
