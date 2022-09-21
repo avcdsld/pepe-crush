@@ -26,7 +26,7 @@ game_state=0 -- 0:title, 1:game, 2:gameover
 gameover_reason=""
 gameover_screen_slct=0
 
-music(9)
+music(9,0,13)
 
 function _init()
  for y=1,tileh do
@@ -84,14 +84,14 @@ function inform_invalid_move()
 end
 
 function switch_to_normal_bgm_mode()
- music(-1,300)
- music(25)
+ music(-1,300,13)
+ music(25,0,13)
  wait_for_angry_pepe=0
 end
 
 function switch_to_hurry_bgm_mode()
- music(-1,300)
- music(33)
+ music(-1,300,13)
+ music(33,0,13)
  wait_for_angry_pepe=20*30 --20sec
 end
 
@@ -506,7 +506,7 @@ function update_game()
    gameover_reason="no remaining moves!"
   end
   gameover_screen_slct=0
-  music(-1, 300)
+  music(-1,300,13)
   sfx(22) -- Gameover
  end
 
