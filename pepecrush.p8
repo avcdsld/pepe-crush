@@ -652,9 +652,9 @@ else
  end
  spr(n,x,y,4,4)
 
-function zspr(n,w,h,dx,dy,dz)
- sspr(8*(n%16),8*flr(n/16),8*w,8*h,dx,dy,8*w*dz,8*h*dz)
-end
+ function zspr(n,w,h,dx,dy,dz)
+  sspr(8*(n%16),8*flr(n/16),8*w,8*h,dx,dy,8*w*dz,8*h*dz)
+ end
 
  zspr(128,7,4,8,16,2)
  print_c("ayalan & 8bitacidlab present", 66, 10, 13) 
