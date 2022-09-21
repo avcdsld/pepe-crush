@@ -523,14 +523,14 @@ function update_game()
  end
  select_cursor()
 
- -- press 'x' + '⬇️' to display hint
- if btnp(5) and btnp(3) then
-  if display_hint then
-   display_hint=false
-  else
-   display_hint=true
-  end
- end
+-- press 'x' + '⬇️' to display hint
+--  if btnp(5) and btnp(3) then
+--   if display_hint then
+--    display_hint=false
+--   else
+--    display_hint=true
+--   end
+--  end
 end
 
 function _update()
