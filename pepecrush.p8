@@ -386,6 +386,9 @@ function clear_match()
     score+=cnt_h*cnt_h
     tile_type=tt
     horizontal_matched=true
+    if cnt_h > max_cnt then
+     max_cnt=cnt_h
+    end
    end
    if cnt_v >= match_cnt then
     local include_bomb_v=clear_vertically(x,y,cnt_v)
@@ -393,11 +396,6 @@ function clear_match()
     score+=cnt_v*cnt_v
     tile_type=tt
     vertical_matched=true
-   end
-   if cnt_h >= match_cnt or cnt_v >= match_cnt then
-    if cnt_h > max_cnt then
-     max_cnt=cnt_h
-    end
     if cnt_v > max_cnt then
      max_cnt=cnt_v
     end
