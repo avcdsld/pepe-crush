@@ -317,12 +317,12 @@ function can_move()
    end
   end
  end
- for y=1,tile_height-1 do
+ for y=1,tileh-1 do
   if exists_match_after_move(tilew,y,tilew,y+1) then
    return true
   end
  end
- for x=1,tile_width-1 do
+ for x=1,tilew-1 do
   if exists_match_after_move(x,tileh,x+1,tileh) then
    return true
   end
