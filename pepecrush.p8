@@ -255,7 +255,7 @@ function destroy_by_bomb(tile_type)
   end
  end
  if cnt > 0 then
-  sfx(24) -- Bomb
+  sfx(37) -- Bomb
   score+=cnt*cnt
  end
 end
