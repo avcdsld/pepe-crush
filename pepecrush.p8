@@ -26,7 +26,11 @@ game_state=0 -- 0:title, 1:game, 2:gameover
 gameover_reason=""
 gameover_screen_slct=0
 
-music(9,0,13)
+music_start=9
+music_bgm=25
+music_bgm_fast=33
+music_gameover=0
+music(music_start,0,13)
 
 function _init()
  for y=1,tileh do
@@ -75,6 +79,10 @@ function _init()
   add(star_blink_current_wait,wait)
  end
  wait_for_star=2
+
+ -- for gameover music
+ wait_for_gameover_music=0
+ should_play_gameover_music=false
 end
 
 function inform_invalid_move()
@@ -84,14 +92,14 @@ function inform_invalid_move()
 end
 
 function switch_to_normal_bgm_mode()
- music(-1,300,13)
- music(25,0,13)
+ music(-1,300)
+ music(music_bgm,0,13)
  wait_for_angry_pepe=0
 end
 
 function switch_to_hurry_bgm_mode()
- music(-1,300,13)
- music(33,0,13)
+ music(-1,300)
+ music(music_bgm_fast,0,13)
  wait_for_angry_pepe=20*30 --20sec
 end
 
@@ -482,7 +490,7 @@ end
 function update_game()
  if not tiles_initialized then
   score=0
-  time_left=60*30 --1min
+  time_left=5*30 --1min
  end
 
  if exists_empty_tiles() then
@@ -530,8 +538,10 @@ function update_game()
    gameover_reason="no remaining moves!"
   end
   gameover_screen_slct=0
-  music(-1,300,13)
+  music(-1,300)
   sfx(22) -- Gameover
+  wait_for_gameover_music=3.5*30 --3.5sec
+  should_play_gameover_music=true
  end
 
  cur_blink+=1
@@ -561,8 +571,8 @@ function _update()
  if game_state == 0 then
   if btnp(4) then
    game_state=1
-   music(-1,300,13)
-   music(25,0,13)
+   music(-1,300)
+   music(music_bgm,0,13)
   end
  elseif game_state == 1 then
   update_game()
@@ -576,10 +586,16 @@ function _update()
    else
     _init()
     game_state=1
-    music(25,0,13)
+    music(-1,300)
+    music(music_bgm,0,13)
    end
   end
-
+  if wait_for_gameover_music > 0 then
+   wait_for_gameover_music-=1
+  elseif should_play_gameover_music then
+   should_play_gameover_music=false
+   music(music_gameover,30,13)
+  end
  else
   if btnp(4) or btnp(5) then
    game_state=2
